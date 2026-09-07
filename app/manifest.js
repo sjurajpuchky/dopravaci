@@ -10,6 +10,9 @@ export default function manifest() {
     background_color: "#fff8ed",
     theme_color: "#c75b39",
     lang: "cs-CZ",
-    icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml" }],
+    icons: [
+      { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
+      { src: "/apple-touch-icon.png", sizes: "180x180", type: "image/png", purpose: "any" },
+    ],
   };
 }

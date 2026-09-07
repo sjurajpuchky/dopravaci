@@ -28,7 +28,11 @@ export const metadata = {
   creator: SITE_NAME,
   publisher: SITE_NAME,
   category: "Stěhování a doprava",
-  icons: { icon: "/icon.svg", shortcut: "/icon.svg" },
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   referrer: "origin-when-cross-origin",
   formatDetection: { email: false, address: false, telephone: false },
   alternates: { canonical: "/", languages: { "cs-CZ": "/" } },

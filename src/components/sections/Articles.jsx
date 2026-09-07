@@ -49,7 +49,7 @@ const items = [
   },
 ];
 
-function Card({ a }) {
+function Card({ a, duplicate = false }) {
   return (
     <article className="group shrink-0 w-[85vw] sm:w-[400px] bg-cream rounded-[24px] overflow-hidden border border-[rgba(107,79,58,0.15)] shadow-[0_10px_0_rgba(107,79,58,0.08)] transition-transform hover:-translate-y-1">
       <div className="relative aspect-[3/2] overflow-hidden">
@@ -65,9 +65,15 @@ function Card({ a }) {
       </div>
       <div className="p-6">
         <div className="font-mono text-[10px] text-terracotta uppercase tracking-wider mb-2">{a.meta}</div>
-        <h3 className="font-display font-bold text-brown text-xl leading-tight mb-3 group-hover:text-terracotta transition-colors">
-          {a.title}
-        </h3>
+        {duplicate ? (
+          <div className="font-display font-bold text-brown text-xl leading-tight mb-3 group-hover:text-terracotta transition-colors">
+            {a.title}
+          </div>
+        ) : (
+          <h3 className="font-display font-bold text-brown text-xl leading-tight mb-3 group-hover:text-terracotta transition-colors">
+            {a.title}
+          </h3>
+        )}
         <p className="text-brown-soft text-sm leading-relaxed mb-5">{a.excerpt}</p>
         <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-terracotta">
           Zobrazit detail
@@ -103,7 +109,7 @@ export default function Articles() {
           {[0, 1].map((g) => (
             <div key={g} className="flex gap-6 pr-6 shrink-0" aria-hidden={g === 1}>
               {items.map((a, i) => (
-                <Card key={`${g}-${i}`} a={a} />
+                <Card key={`${g}-${i}`} a={a} duplicate={g === 1} />
               ))}
             </div>
           ))}

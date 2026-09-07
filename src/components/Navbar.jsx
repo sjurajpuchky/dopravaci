@@ -39,10 +39,7 @@ export default function Navbar() {
         <img src={s.logo_url} alt={`${s.brand_name}${s.brand_suffix}`} className="h-9 w-auto" />
       ) : (
         <>
-          <div
-            className="w-11 h-11 bg-terracotta flex items-center justify-center"
-            style={{ borderRadius: "15px 15px 15px 5px", boxShadow: "0 5px 0 rgba(107,79,58,0.12)" }}
-          >
+          <div className="navbar-logo w-11 h-11 bg-terracotta flex items-center justify-center">
             <HomeIcon className="w-5 h-5 text-white" strokeWidth={2.5} />
           </div>
           <div className="leading-none">
