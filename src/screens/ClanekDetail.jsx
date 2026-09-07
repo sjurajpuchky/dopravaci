@@ -44,7 +44,7 @@ export default function ClanekDetail({ initialItem = null }) {
         ) : (
           <div className="max-w-3xl mx-auto px-5 md:px-10">
             <Link
-              href="/#clanky"
+              href="/clanky"
               className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-brown-soft hover:text-terracotta mb-8 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" /> Zpět na články
