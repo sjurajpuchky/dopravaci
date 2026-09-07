@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Dopravaci.cz">
+  <rect width="64" height="64" rx="14" fill="#6b4f3a"/>
+  <path fill="#fff8ed" d="M10 18h29v25H10z"/>
+  <path fill="#e57650" d="M39 27h9l7 8v8H39z"/>
+  <circle cx="21" cy="46" r="6" fill="#3f2d22"/>
+  <circle cx="46" cy="46" r="6" fill="#3f2d22"/>
+  <circle cx="21" cy="46" r="2.5" fill="#fff8ed"/>
+  <circle cx="46" cy="46" r="2.5" fill="#fff8ed"/>
+</svg>

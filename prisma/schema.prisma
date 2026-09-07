@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum InquiryStatus {
+  NEW
+  TAKEN
+  COMPLETED
+}
+
+enum AuthTokenType {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique @db.VarChar(191)
+  passwordHash   String         @map("password_hash") @db.VarChar(255)
+  fullName       String?        @map("full_name") @db.VarChar(191)
+  company        String?        @db.VarChar(191)
+  phone          String?        @db.VarChar(64)
+  note           String?        @db.Text
+  role           UserRole       @default(USER)
+  approvalStatus ApprovalStatus @default(PENDING) @map("approval_status")
+  emailVerified  Boolean        @default(false) @map("email_verified")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  sessions       AuthSession[]
+  authTokens     AuthToken[]
+  createdOrders  Inquiry[]      @relation("InquiryCreator")
+  takenOrders    Inquiry[]      @relation("InquiryAssignee")
+
+  @@map("users")
+}
+
+model AuthSession {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique @map("token_hash") @db.Char(64)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("auth_sessions")
+}
+
+model AuthToken {
+  id        String        @id @default(cuid())
+  tokenHash String        @unique @map("token_hash") @db.Char(64)
+  type      AuthTokenType
+  expiresAt DateTime      @map("expires_at")
+  createdAt DateTime      @default(now()) @map("created_at")
+  userId    String        @map("user_id")
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@map("auth_tokens")
+}
+
+model Inquiry {
+  id          String        @id @default(cuid())
+  name        String        @db.VarChar(191)
+  phone       String        @db.VarChar(64)
+  email       String?       @db.VarChar(191)
+  fromCity    String?       @map("from_city") @db.VarChar(191)
+  toCity      String?       @map("to_city") @db.VarChar(191)
+  distanceKm  Float?        @map("distance_km")
+  volume      Float?
+  floors      Int?
+  heavyItems  Boolean       @default(false) @map("heavy_items")
+  cargo       String?       @db.Text
+  note        String?       @db.Text
+  status      InquiryStatus @default(NEW)
+  commission  Float?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  createdById String?       @map("created_by_id")
+  createdBy   User?         @relation("InquiryCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  takenById   String?       @map("taken_by_id")
+  takenBy     User?         @relation("InquiryAssignee", fields: [takenById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([takenById, createdAt])
+  @@map("inquiries")
+}
+
+model Article {
+  id         String   @id @default(cuid())
+  title      String   @db.VarChar(255)
+  slug       String   @unique @db.VarChar(191)
+  excerpt    String?  @db.Text
+  content    String   @db.LongText
+  imageUrl   String?  @map("image_url") @db.Text
+  gallery    Json?
+  videos     Json?
+  tag        String?  @db.VarChar(100)
+  meta       String?  @db.Text
+  published  Boolean  @default(false)
+  authorName String?  @map("author_name") @db.VarChar(191)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([published, createdAt])
+  @@map("articles")
+}
+
+model SiteSettings {
+  id               Int      @id @default(autoincrement())
+  logoUrl          String?  @map("logo_url") @db.Text
+  brandName        String?  @map("brand_name") @db.VarChar(191)
+  brandSuffix      String?  @map("brand_suffix") @db.VarChar(50)
+  brandTagline     String?  @map("brand_tagline") @db.VarChar(255)
+  phone            String?  @db.VarChar(64)
+  phoneHref        String?  @map("phone_href") @db.VarChar(100)
+  email            String?  @db.VarChar(191)
+  address          String?  @db.VarChar(255)
+  ic               String?  @db.VarChar(64)
+  ownerName        String?  @map("owner_name") @db.VarChar(191)
+  heroEyebrow      String?  @map("hero_eyebrow") @db.Text
+  heroTitle        String?  @map("hero_title") @db.Text
+  heroParagraph    String?  @map("hero_paragraph") @db.Text
+  heroImageUrl     String?  @map("hero_image_url") @db.Text
+  heroCtaPrimary   String?  @map("hero_cta_primary") @db.VarChar(191)
+  heroCtaSecondary String?  @map("hero_cta_secondary") @db.VarChar(191)
+  stat1Value       String?  @map("stat1_value") @db.VarChar(64)
+  stat1Label       String?  @map("stat1_label") @db.VarChar(191)
+  stat2Value       String?  @map("stat2_value") @db.VarChar(64)
+  stat2Label       String?  @map("stat2_label") @db.VarChar(191)
+  stat3Value       String?  @map("stat3_value") @db.VarChar(64)
+  stat3Label       String?  @map("stat3_label") @db.VarChar(191)
+  stat4Value       String?  @map("stat4_value") @db.VarChar(64)
+  stat4Label       String?  @map("stat4_label") @db.VarChar(191)
+  aboutEyebrow     String?  @map("about_eyebrow") @db.Text
+  aboutTitle       String?  @map("about_title") @db.Text
+  aboutParagraph1  String?  @map("about_paragraph_1") @db.Text
+  aboutParagraph2  String?  @map("about_paragraph_2") @db.Text
+  aboutImageUrl    String?  @map("about_image_url") @db.Text
+  mapLat           Float?   @map("map_lat")
+  mapLng           Float?   @map("map_lng")
+  gallery          Json?
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}
+
+model GalleryItem {
+  id        String   @id @default(cuid())
+  src       String   @db.Text
+  alt       String?  @db.VarChar(255)
+  tag       String?  @db.VarChar(100)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([sortOrder])
+  @@map("gallery_items")
+}
