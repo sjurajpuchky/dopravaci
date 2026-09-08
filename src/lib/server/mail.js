@@ -1,12 +1,24 @@
 import nodemailer from "nodemailer";
 
+const LOOPBACK_SMTP_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+
 function transport() {
-  if (!process.env.SMTP_HOST) return null;
+  const host = process.env.SMTP_HOST?.trim();
+  if (!host) return null;
+
+  const ignoreTLS = process.env.SMTP_IGNORE_TLS === "true";
+  const useAuth = process.env.SMTP_AUTH !== "false" && Boolean(process.env.SMTP_USER);
+
+  if (ignoreTLS && !LOOPBACK_SMTP_HOSTS.has(host.toLowerCase())) {
+    throw new Error("SMTP_IGNORE_TLS lze z bezpečnostních důvodů použít pouze pro localhost");
+  }
+
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
+    host,
     port: Number(process.env.SMTP_PORT || 587),
     secure: process.env.SMTP_SECURE === "true",
-    auth: process.env.SMTP_USER
+    ignoreTLS,
+    auth: useAuth
       ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
       : undefined,
   });

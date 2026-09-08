@@ -29,9 +29,11 @@ existující účet pouze povýší na administrátora a nesmaže žádná data.
 SMTP je volitelné. Bez něj funguje web i administrace, ale neodesílají se
 notifikace a resetovací e-maily. Pro povinné ověření registrací nastavte
 `EMAIL_VERIFICATION_REQUIRED=true` a doplňte všechny `SMTP_*` proměnné.
-Hodnota `SMTP_HOST` musí být DNS název uvedený v TLS certifikátu poštovního
-serveru (například `mail.example.cz`), nikoli `localhost`, pokud certifikát
-pro `localhost` vystavený není. Ověřování TLS certifikátu zůstává zapnuté.
+Pro lokální poštovní server bez autorizace a TLS použijte `SMTP_HOST=localhost`,
+`SMTP_PORT=25`, `SMTP_SECURE=false`, `SMTP_AUTH=false` a
+`SMTP_IGNORE_TLS=true`. Režim bez TLS aplikace z bezpečnostních důvodů povolí
+pouze pro `localhost`, `127.0.0.1` nebo `::1`. U vzdáleného SMTP musí
+`SMTP_HOST` odpovídat názvu uvedenému v TLS certifikátu.
 Nová poptávka z kalkulačky i kontaktního formuláře se odešle skrytě všem
 uživatelům s rolí `ADMIN`; pokud žádný administrátor neexistuje, použije se
 kontaktní e-mail z nastavení webu.
