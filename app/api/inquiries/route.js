@@ -4,10 +4,35 @@ import { prisma } from "@/lib/server/prisma";
 import { serializeInquiry } from "@/lib/server/serializers";
 import { sendInquiryMail } from "@/lib/server/mail";
 
+const INQUIRY_SOURCES = new Set(["calculator", "contact"]);
+
+async function notifyAdmins(inquiry, source) {
+  try {
+    const admins = await prisma.user.findMany({
+      where: { role: "ADMIN" },
+      select: { email: true },
+    });
+    let recipients = admins.map((admin) => admin.email);
+
+    if (recipients.length === 0) {
+      const settings = await prisma.siteSettings.findFirst({
+        orderBy: { updatedAt: "desc" },
+        select: { email: true },
+      });
+      recipients = [settings?.email];
+    }
+
+    await sendInquiryMail(recipients, inquiry, source);
+  } catch (error) {
+    console.error("Odeslání poptávky administrátorům selhalo", error);
+  }
+}
+
 export async function POST(request) {
   const body = await readJson(request);
   const name = cleanString(body?.name, 191);
   const phone = cleanString(body?.phone, 64);
+  const source = INQUIRY_SOURCES.has(body?.source) ? body.source : "web";
   if (!name || !phone) return fail("Jméno a telefon jsou povinné");
   const user = await getCurrentUser();
   const inquiry = await prisma.inquiry.create({
@@ -27,8 +52,7 @@ export async function POST(request) {
     },
     include: { takenBy: true },
   });
-  const settings = await prisma.siteSettings.findFirst({ orderBy: { updatedAt: "desc" }, select: { email: true } });
-  await sendInquiryMail(settings?.email, inquiry).catch((error) => console.error("Odeslání poptávky e-mailem selhalo", error));
+  await notifyAdmins(inquiry, source);
   return ok(serializeInquiry(inquiry), { status: 201 });
 }
 

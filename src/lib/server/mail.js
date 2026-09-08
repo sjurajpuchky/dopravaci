@@ -40,18 +40,49 @@ export async function sendResetMail(email, token) {
   });
 }
 
-export async function sendInquiryMail(email, inquiry) {
-  if (!email) return false;
+function uniqueRecipients(recipients) {
+  const values = Array.isArray(recipients) ? recipients : [recipients];
+  const unique = new Map();
+
+  for (const value of values) {
+    if (typeof value !== "string") continue;
+    const email = value.trim();
+    if (!/^\S+@\S+\.\S+$/.test(email)) continue;
+    unique.set(email.toLowerCase(), email);
+  }
+
+  return [...unique.values()];
+}
+
+export async function sendInquiryMail(recipients, inquiry, source = "web") {
+  const emails = uniqueRecipients(recipients);
+  if (emails.length === 0) return false;
+
+  const sourceLabels = {
+    calculator: "kalkulačky",
+    contact: "kontaktního formuláře",
+    web: "webu",
+  };
+  const sourceLabel = sourceLabels[source] || sourceLabels.web;
+  const adminUrl = `${(process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "")}/admin`;
+
   return sendMail({
-    to: email,
-    subject: `Nová poptávka — ${inquiry.name}`,
+    bcc: emails,
+    subject: `Nová poptávka z ${sourceLabel} — ${inquiry.name}`,
     text: [
+      `Zdroj: ${sourceLabel}`,
       `Jméno: ${inquiry.name}`,
       `Telefon: ${inquiry.phone}`,
       inquiry.email ? `E-mail: ${inquiry.email}` : null,
       inquiry.fromCity || inquiry.toCity ? `Trasa: ${inquiry.fromCity || "—"} → ${inquiry.toCity || "—"}` : null,
+      Number.isFinite(inquiry.distanceKm) ? `Vzdálenost: ${inquiry.distanceKm} km` : null,
+      Number.isFinite(inquiry.volume) ? `Objem: ${inquiry.volume} m³` : null,
+      Number.isInteger(inquiry.floors) ? `Patra celkem: ${inquiry.floors}` : null,
+      inquiry.heavyItems ? "Obsahuje těžké předměty: ano" : null,
       inquiry.cargo ? `Náklad: ${inquiry.cargo}` : null,
       inquiry.note ? `Poznámka: ${inquiry.note}` : null,
+      "",
+      `Poptávku otevřete v administraci: ${adminUrl}`,
     ].filter(Boolean).join("\n"),
   });
 }

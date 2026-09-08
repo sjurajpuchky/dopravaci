@@ -156,6 +156,7 @@ export default function CalculatorWizard() {
       ].filter(Boolean).join(" · ");
 
       await api.inquiries.create({
+        source: "calculator",
         name: contact.name,
         phone: contact.phone,
         email: contact.email,

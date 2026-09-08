@@ -80,6 +80,7 @@ export default function Contact() {
     setSending(true);
     try {
       await api.inquiries.create({
+        source: "contact",
         name: form.name,
         phone: form.phone,
         email: form.email,

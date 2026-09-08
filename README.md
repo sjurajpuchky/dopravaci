@@ -29,6 +29,9 @@ existující účet pouze povýší na administrátora a nesmaže žádná data.
 SMTP je volitelné. Bez něj funguje web i administrace, ale neodesílají se
 notifikace a resetovací e-maily. Pro povinné ověření registrací nastavte
 `EMAIL_VERIFICATION_REQUIRED=true` a doplňte všechny `SMTP_*` proměnné.
+Nová poptávka z kalkulačky i kontaktního formuláře se odešle skrytě všem
+uživatelům s rolí `ADMIN`; pokud žádný administrátor neexistuje, použije se
+kontaktní e-mail z nastavení webu.
 
 ## Uploady
 
