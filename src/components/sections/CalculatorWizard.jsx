@@ -8,6 +8,7 @@ import {
   Crown, Frame, Lamp, Layers, Bike, Flower,
 } from "lucide-react";
 import { api } from "@/api/client";
+import { executeRecaptcha } from "@/lib/recaptcha";
 
 const ELEVATORS = [
   { value: "none", label: "Není" },
@@ -155,8 +156,10 @@ export default function CalculatorWizard() {
         contact.note,
       ].filter(Boolean).join(" · ");
 
+      const captchaToken = await executeRecaptcha("inquiry_calculator");
       await api.inquiries.create({
         source: "calculator",
+        captcha_token: captchaToken,
         name: contact.name,
         phone: contact.phone,
         email: contact.email,

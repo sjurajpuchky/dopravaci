@@ -38,6 +38,18 @@ Nová poptávka z kalkulačky i kontaktního formuláře se odešle skrytě vše
 uživatelům s rolí `ADMIN`; pokud žádný administrátor neexistuje, použije se
 kontaktní e-mail z nastavení webu.
 
+## Google reCAPTCHA v3
+
+Kalkulačka i kontaktní formulář jsou chráněné Google reCAPTCHA v3. V Google
+reCAPTCHA administraci založte v3 klíč pro produkční domény a nastavte
+`NEXT_PUBLIC_RECAPTCHA_SITE_KEY` a serverový `RECAPTCHA_SECRET_KEY`. Volitelně
+lze upravit hranici pomocí `RECAPTCHA_MIN_SCORE` (výchozí `0.5`) a povolit
+konkrétní domény přes čárkou oddělené `RECAPTCHA_ALLOWED_HOSTNAMES`.
+
+Backend vždy ověřuje úspěch, skóre a správnou akci (`inquiry_calculator` nebo
+`inquiry_contact`); při nastaveném seznamu domén kontroluje také hostname.
+Bez serverového klíče se formuláře z bezpečnostních důvodů neodešlou.
+
 ## Uploady
 
 Administrace ukládá obrázky a videa do `UPLOAD_DIR` a servíruje je přes
@@ -83,6 +95,6 @@ npm run build
 ## Produkce
 
 1. Nastavte produkční `DATABASE_URL`, `APP_URL`, `SESSION_COOKIE_SECURE=true`,
-   SMTP a trvalý `UPLOAD_DIR`.
+   SMTP, reCAPTCHA klíče a trvalý `UPLOAD_DIR`.
 2. Spusťte `npm ci`, `npm run db:deploy` a `npm run build`.
 3. Aplikaci spusťte přes `npm start`.

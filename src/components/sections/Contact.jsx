@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Phone, Mail, MapPin, Clock, Send, Check, Loader2 } from "lucide-react";
 import { api } from "@/api/client";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { executeRecaptcha } from "@/lib/recaptcha";
 
 function ContactMap({ latitude, longitude, brandName, brandSuffix, address }) {
   const containerRef = useRef(null);
@@ -79,8 +80,10 @@ export default function Contact() {
     setError("");
     setSending(true);
     try {
+      const captchaToken = await executeRecaptcha("inquiry_contact");
       await api.inquiries.create({
         source: "contact",
+        captcha_token: captchaToken,
         name: form.name,
         phone: form.phone,
         email: form.email,

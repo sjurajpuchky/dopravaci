@@ -1,10 +1,12 @@
 import "@/index.css";
 import "leaflet/dist/leaflet.css";
+import Script from "next/script";
 import Providers from "./providers";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 const GOOGLE_TAG_ID = (process.env.GOOGLE_TAG_ID || "G-FN28LJKTQT").trim().toUpperCase();
+const RECAPTCHA_SITE_KEY = (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "").trim();
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -74,6 +76,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="cs-CZ">
       <body>
+        {RECAPTCHA_SITE_KEY ? (
+          <Script
+            id="google-recaptcha-v3"
+            src={`https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(RECAPTCHA_SITE_KEY)}`}
+            strategy="afterInteractive"
+          />
+        ) : null}
         <GoogleAnalytics measurementId={GOOGLE_TAG_ID} />
         <Providers>{children}</Providers>
       </body>

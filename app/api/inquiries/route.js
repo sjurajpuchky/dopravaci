@@ -3,8 +3,13 @@ import { cleanString, fail, ok, readJson } from "@/lib/server/http";
 import { prisma } from "@/lib/server/prisma";
 import { serializeInquiry } from "@/lib/server/serializers";
 import { sendInquiryMail } from "@/lib/server/mail";
+import { verifyRecaptcha } from "@/lib/server/recaptcha";
 
 const INQUIRY_SOURCES = new Set(["calculator", "contact"]);
+const CAPTCHA_ACTIONS = {
+  calculator: "inquiry_calculator",
+  contact: "inquiry_contact",
+};
 
 async function notifyAdmins(inquiry, source) {
   try {
@@ -32,8 +37,27 @@ export async function POST(request) {
   const body = await readJson(request);
   const name = cleanString(body?.name, 191);
   const phone = cleanString(body?.phone, 64);
-  const source = INQUIRY_SOURCES.has(body?.source) ? body.source : "web";
+  const source = cleanString(body?.source, 32);
   if (!name || !phone) return fail("Jméno a telefon jsou povinné");
+  if (!INQUIRY_SOURCES.has(source)) return fail("Neplatný zdroj poptávky");
+
+  const captcha = await verifyRecaptcha(
+    cleanString(body?.captcha_token, 4096),
+    CAPTCHA_ACTIONS[source],
+  );
+  if (!captcha.ok) {
+    if (captcha.reason === "not-configured") {
+      console.error("Google reCAPTCHA v3 není nakonfigurovaná");
+      return fail("Odeslání formuláře není momentálně dostupné", 503);
+    }
+    console.warn("Google reCAPTCHA v3 odmítla poptávku", {
+      source,
+      reason: captcha.reason,
+      score: captcha.score,
+    });
+    return fail("Ověření proti spamu se nezdařilo. Zkuste to prosím znovu.", 400);
+  }
+
   const user = await getCurrentUser();
   const inquiry = await prisma.inquiry.create({
     data: {
