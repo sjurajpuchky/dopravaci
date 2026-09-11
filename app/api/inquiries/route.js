@@ -3,6 +3,7 @@ import { cleanString, fail, ok, readJson } from "@/lib/server/http";
 import { prisma } from "@/lib/server/prisma";
 import { serializeInquiry } from "@/lib/server/serializers";
 import { sendInquiryMail } from "@/lib/server/mail";
+import { consumeInquiryRateLimit, inspectInquirySubmission } from "@/lib/server/inquiry-abuse";
 import { verifyRecaptcha } from "@/lib/server/recaptcha";
 
 const INQUIRY_SOURCES = new Set(["calculator", "contact"]);
@@ -41,6 +42,12 @@ export async function POST(request) {
   if (!name || !phone) return fail("Jméno a telefon jsou povinné");
   if (!INQUIRY_SOURCES.has(source)) return fail("Neplatný zdroj poptávky");
 
+  const submission = inspectInquirySubmission(body);
+  if (!submission.ok) {
+    if (submission.silent) return ok({ accepted: true }, { status: 201 });
+    return fail("Formulář vypršel. Obnovte stránku a zkuste to znovu.", 400);
+  }
+
   const captcha = await verifyRecaptcha(
     cleanString(body?.captcha_token, 4096),
     CAPTCHA_ACTIONS[source],
@@ -56,6 +63,13 @@ export async function POST(request) {
       score: captcha.score,
     });
     return fail("Ověření proti spamu se nezdařilo. Zkuste to prosím znovu.", 400);
+  }
+
+  const rateLimit = consumeInquiryRateLimit(request);
+  if (!rateLimit.ok) {
+    return fail("Odeslali jste příliš mnoho poptávek. Zkuste to prosím později.", 429, {
+      retry_after_seconds: rateLimit.retryAfterSeconds,
+    });
   }
 
   const user = await getCurrentUser();

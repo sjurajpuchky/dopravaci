@@ -114,6 +114,8 @@ export default function CalculatorWizard() {
   const [distance] = useState(15);
   const [services, setServices] = useState({ assembly: false, clearance: false, extraHours: 0 });
   const [contact, setContact] = useState({ name: "", phone: "", email: "", date: "", note: "", consent: false });
+  const [companyWebsite, setCompanyWebsite] = useState("");
+  const [formStartedAt] = useState(() => Date.now());
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
@@ -160,6 +162,8 @@ export default function CalculatorWizard() {
       await api.inquiries.create({
         source: "calculator",
         captcha_token: captchaToken,
+        company_website: companyWebsite,
+        form_started_at: formStartedAt,
         name: contact.name,
         phone: contact.phone,
         email: contact.email,
@@ -449,6 +453,18 @@ export default function CalculatorWizard() {
                 Souhlasím se zpracováním osobních údajů a potvrzuji, že jde o nezávaznou poptávku kalkulace.
               </span>
             </label>
+            <div className="absolute -left-[10000px] top-auto w-px h-px overflow-hidden" aria-hidden="true">
+              <label htmlFor="calculator_company_website">Web společnosti</label>
+              <input
+                id="calculator_company_website"
+                name="company_website"
+                type="text"
+                value={companyWebsite}
+                onChange={(event) => setCompanyWebsite(event.target.value)}
+                autoComplete="off"
+                tabIndex={-1}
+              />
+            </div>
             {error && <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 text-red-700 text-sm rounded-[13px]">{error}</div>}
           </div>
         )}

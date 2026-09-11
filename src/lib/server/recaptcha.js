@@ -1,5 +1,5 @@
 const VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
-const DEFAULT_MIN_SCORE = 0.5;
+const DEFAULT_MIN_SCORE = 0.7;
 
 function minimumScore() {
   const rawValue = (process.env.RECAPTCHA_MIN_SCORE || "").trim();
@@ -10,12 +10,19 @@ function minimumScore() {
 }
 
 function allowedHostnames() {
-  return new Set(
+  const hostnames = new Set(
     (process.env.RECAPTCHA_ALLOWED_HOSTNAMES || "")
       .split(",")
       .map((hostname) => hostname.trim().toLowerCase())
       .filter(Boolean),
   );
+  try {
+    const appHostname = new URL(process.env.APP_URL || "").hostname.toLowerCase();
+    if (appHostname) hostnames.add(appHostname);
+  } catch {
+    // An invalid APP_URL is handled by the rest of the application configuration.
+  }
+  return hostnames;
 }
 
 export async function verifyRecaptcha(token, expectedAction) {

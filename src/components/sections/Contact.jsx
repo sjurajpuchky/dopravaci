@@ -67,6 +67,8 @@ export default function Contact() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", phone: "", email: "", cargo: "", message: "" });
+  const [companyWebsite, setCompanyWebsite] = useState("");
+  const [formStartedAt, setFormStartedAt] = useState(() => Date.now());
 
   const contactItems = [
     { icon: Phone, label: "Telefon", value: s.phone, href: s.phone_href },
@@ -84,6 +86,8 @@ export default function Contact() {
       await api.inquiries.create({
         source: "contact",
         captcha_token: captchaToken,
+        company_website: companyWebsite,
+        form_started_at: formStartedAt,
         name: form.name,
         phone: form.phone,
         email: form.email,
@@ -94,6 +98,8 @@ export default function Contact() {
       setTimeout(() => {
         setSent(false);
         setForm({ name: "", phone: "", email: "", cargo: "", message: "" });
+        setCompanyWebsite("");
+        setFormStartedAt(Date.now());
       }, 4000);
     } catch (err) {
       setError(err?.response?.data?.error || err.message || "Odeslání selhalo");
@@ -161,6 +167,18 @@ export default function Contact() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="grid gap-4">
+                <div className="absolute -left-[10000px] top-auto w-px h-px overflow-hidden" aria-hidden="true">
+                  <label htmlFor="contact_company_website">Web společnosti</label>
+                  <input
+                    id="contact_company_website"
+                    name="company_website"
+                    type="text"
+                    value={companyWebsite}
+                    onChange={(event) => setCompanyWebsite(event.target.value)}
+                    autoComplete="off"
+                    tabIndex={-1}
+                  />
+                </div>
                 {field("Jméno / Firma", "name", "text", "Jan Novák / ACME s.r.o.")}
                 {field("Telefon", "phone", "tel", "+420 123 456 789")}
                 {field("E-mail", "email", "email", "jan@firma.cz")}

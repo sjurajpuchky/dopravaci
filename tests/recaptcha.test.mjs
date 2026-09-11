@@ -2,6 +2,11 @@ import assert from "node:assert/strict";
 import { afterEach, beforeEach, test } from "node:test";
 
 import { verifyRecaptcha } from "../src/lib/server/recaptcha.js";
+import {
+  clearInquiryRateLimits,
+  consumeInquiryRateLimit,
+  inspectInquirySubmission,
+} from "../src/lib/server/inquiry-abuse.js";
 
 const originalFetch = global.fetch;
 const originalEnvironment = {
@@ -11,6 +16,7 @@ const originalEnvironment = {
 };
 
 beforeEach(() => {
+  clearInquiryRateLimits();
   process.env.RECAPTCHA_SECRET_KEY = "test-secret";
   process.env.RECAPTCHA_MIN_SCORE = "0.5";
   process.env.RECAPTCHA_ALLOWED_HOSTNAMES = "dopravaci.cz,www.dopravaci.cz";
@@ -99,4 +105,29 @@ test("fails closed when the server secret is not configured", async () => {
   const result = await verifyRecaptcha("browser-token", "inquiry_contact");
 
   assert.deepEqual(result, { ok: false, reason: "not-configured" });
+});
+
+test("rejects honeypot and implausibly fast submissions", () => {
+  assert.deepEqual(
+    inspectInquirySubmission({ company_website: "https://spam.example", form_started_at: 1 }, 5_000),
+    { ok: false, silent: true, reason: "honeypot" },
+  );
+  assert.deepEqual(
+    inspectInquirySubmission({ company_website: "", form_started_at: 4_500 }, 5_000),
+    { ok: false, silent: false, reason: "invalid-form-age" },
+  );
+  assert.deepEqual(
+    inspectInquirySubmission({ company_website: "", form_started_at: 3_000 }, 5_000),
+    { ok: true },
+  );
+});
+
+test("limits accepted submissions per client address", () => {
+  const request = { headers: new Headers({ "x-real-ip": "192.0.2.1" }) };
+  for (let index = 0; index < 5; index += 1) {
+    assert.deepEqual(consumeInquiryRateLimit(request, 10_000 + index), { ok: true });
+  }
+  const blocked = consumeInquiryRateLimit(request, 10_100);
+  assert.equal(blocked.ok, false);
+  assert.ok(blocked.retryAfterSeconds > 0);
 });
