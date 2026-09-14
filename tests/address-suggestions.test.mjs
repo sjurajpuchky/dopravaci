@@ -25,15 +25,29 @@ test("výsledek se převede na jednoznačnou adresu pro formulář", () => {
       name: "Jiránkova 1137/1",
       label: "Jiránkova 1137/1",
       location: "Praha-Řepy, Česko",
+      zip: "163 00",
       userData: { id: 12345 },
     }),
     {
       id: "12345",
-      address: "Jiránkova 1137/1, Praha-Řepy, Česko",
+      address: "Jiránkova 1137/1, 163 00 Praha-Řepy, Česko",
       title: "Jiránkova 1137/1",
-      detail: "Praha-Řepy, Česko",
+      detail: "163 00 Praha-Řepy, Česko",
+      postalCode: "163 00",
     },
   );
+});
+
+test("PSČ se v adrese neduplikuje, pokud ho lokalita už obsahuje", () => {
+  const suggestion = normalizeMapySuggestion({
+    name: "Masarykovo náměstí 1",
+    location: "686 01 Uherské Hradiště, Česko",
+    zip: "686 01",
+  });
+
+  assert.equal(suggestion.address, "Masarykovo náměstí 1, 686 01 Uherské Hradiště, Česko");
+  assert.equal(suggestion.detail, "686 01 Uherské Hradiště, Česko");
+  assert.equal(suggestion.postalCode, "686 01");
 });
 
 test("neplatné položky z externího API se zahodí", () => {

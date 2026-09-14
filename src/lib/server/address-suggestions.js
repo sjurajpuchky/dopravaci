@@ -12,12 +12,16 @@ export function normalizeMapySuggestion(item, index = 0) {
 
   const label = text(item.label);
   const location = text(item.location);
+  const postalCode = text(item.zip);
   const title = name;
-  const detail = [label && label !== name ? label : "", location]
+  const locality = postalCode && !location.includes(postalCode)
+    ? [postalCode, location].filter(Boolean).join(" ")
+    : location || postalCode;
+  const detail = [label && label !== name ? label : "", locality]
     .filter(Boolean)
-    .join(", ");
-  const address = location && !name.toLocaleLowerCase("cs").includes(location.toLocaleLowerCase("cs"))
-    ? `${name}, ${location}`
+    .join(" · ");
+  const address = locality && !name.toLocaleLowerCase("cs").includes(locality.toLocaleLowerCase("cs"))
+    ? `${name}, ${locality}`
     : name;
   const sourceId = item.id ?? item.userData?.id ?? item.userData?.sourceId;
 
@@ -26,6 +30,7 @@ export function normalizeMapySuggestion(item, index = 0) {
     address,
     title,
     detail,
+    postalCode,
   };
 }
 
