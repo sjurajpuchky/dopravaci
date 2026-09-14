@@ -52,6 +52,14 @@ Bez serverového klíče se formuláře z bezpečnostních důvodů neodešlou.
 Ochranu doplňuje skryté honeypot pole, kontrola doby vyplnění a serverový limit
 pěti přijatých poptávek z jedné IP adresy během 15 minut.
 
+## Našeptávač adres
+
+Adresa nakládky i vykládky v kalkulačce používá REST API Mapy.com. Založte API
+klíč v administraci Mapy.com a nastavte serverovou proměnnou `MAPY_API_KEY`.
+Klíč se neposílá do prohlížeče; požadavky procházejí přes interní endpoint
+`/api/address-suggestions`. Uživatel musí u obou polí vybrat konkrétní adresu
+z nabídky, jinak jej kalkulačka nepustí k dalšímu kroku.
+
 ## Uploady
 
 Administrace ukládá obrázky a videa do `UPLOAD_DIR` a servíruje je přes
@@ -97,6 +105,6 @@ npm run build
 ## Produkce
 
 1. Nastavte produkční `DATABASE_URL`, `APP_URL`, `SESSION_COOKIE_SECURE=true`,
-   SMTP, reCAPTCHA klíče a trvalý `UPLOAD_DIR`.
+   SMTP, reCAPTCHA klíče, `MAPY_API_KEY` a trvalý `UPLOAD_DIR`.
 2. Spusťte `npm ci`, `npm run db:deploy` a `npm run build`.
 3. Aplikaci spusťte přes `npm start`.

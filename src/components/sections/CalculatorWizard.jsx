@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { api } from "@/api/client";
 import { executeRecaptcha } from "@/lib/recaptcha";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 const ELEVATORS = [
   { value: "none", label: "Není" },
@@ -109,8 +110,8 @@ export default function CalculatorWizard() {
   const [propertyType, setPropertyType] = useState("");
   const [items, setItems] = useState({});
   const [otherText, setOtherText] = useState("");
-  const [from, setFrom] = useState({ address: "", floor: 0, elevator: "none" });
-  const [to, setTo] = useState({ address: "", floor: 0, elevator: "none" });
+  const [from, setFrom] = useState({ address: "", addressId: "", floor: 0, elevator: "none" });
+  const [to, setTo] = useState({ address: "", addressId: "", floor: 0, elevator: "none" });
   const [distance] = useState(15);
   const [services, setServices] = useState({ assembly: false, clearance: false, extraHours: 0 });
   const [contact, setContact] = useState({ name: "", phone: "", email: "", date: "", note: "", consent: false });
@@ -135,7 +136,7 @@ export default function CalculatorWizard() {
       : step === 1
       ? itemCount > 0 || otherText.trim().length > 0
       : step === 2
-      ? Boolean(from.address && to.address)
+      ? Boolean(from.addressId && to.addressId)
       : true;
 
   const submit = async () => {
@@ -318,7 +319,13 @@ export default function CalculatorWizard() {
                 <div className="font-mono text-xs text-terracotta uppercase tracking-wider mb-4">Nakládka</div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Field label="Adresa nakládky" icon={MapPin}>
-                    <input className="warm-input" value={from.address} onChange={(e) => setFrom({ ...from, address: e.target.value })} placeholder="Ulice, město" />
+                    <AddressAutocomplete
+                      value={from.address}
+                      selected={Boolean(from.addressId)}
+                      onInput={(address) => setFrom({ ...from, address, addressId: "" })}
+                      onSelect={(suggestion) => setFrom({ ...from, address: suggestion.address, addressId: suggestion.id })}
+                      placeholder="Ulice a číslo, město"
+                    />
                   </Field>
                   <Field label="Patro" icon={Building2}>
                     <select className="warm-input" value={from.floor} onChange={(e) => setFrom({ ...from, floor: Number(e.target.value) })}>
@@ -352,7 +359,13 @@ export default function CalculatorWizard() {
                 <div className="font-mono text-xs text-terracotta uppercase tracking-wider mb-4">Vykládka</div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Field label="Adresa vykládky" icon={MapPin}>
-                    <input className="warm-input" value={to.address} onChange={(e) => setTo({ ...to, address: e.target.value })} placeholder="Ulice, město" />
+                    <AddressAutocomplete
+                      value={to.address}
+                      selected={Boolean(to.addressId)}
+                      onInput={(address) => setTo({ ...to, address, addressId: "" })}
+                      onSelect={(suggestion) => setTo({ ...to, address: suggestion.address, addressId: suggestion.id })}
+                      placeholder="Ulice a číslo, město"
+                    />
                   </Field>
                   <Field label="Patro" icon={Building2}>
                     <select className="warm-input" value={to.floor} onChange={(e) => setTo({ ...to, floor: Number(e.target.value) })}>
