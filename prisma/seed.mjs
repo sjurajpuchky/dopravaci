@@ -18,7 +18,7 @@ async function main() {
     await prisma.siteSettings.create({
       data: {
         brandName: "DOPRAVACI", brandSuffix: ".CZ", brandTagline: "Dopravní společnost",
-        phone: "+420 732 530 802", phoneHref: "tel:+420732530802", email: "ivekodopravci@seznam.cz",
+        phone: "+420 732 530 802", phoneHref: "tel:+420732530802", email: "info@dopravaci.cz",
         address: "Jiránkova 1137/1, Praha-Řepy 163 00", ic: "76651282", ownerName: "Milan Rousek",
         heroEyebrow: "// Doprava & přeprava nestandardních předmětů",
         heroTitle: "Dopravíme vše, co je pro ostatní těžké.",

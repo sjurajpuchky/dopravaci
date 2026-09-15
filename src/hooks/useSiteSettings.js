@@ -8,7 +8,7 @@ export const DEFAULT_SETTINGS = {
   brand_tagline: "Dopravní společnost",
   phone: "+420 732 530 802",
   phone_href: "tel:+420732530802",
-  email: "ivekodopravci@seznam.cz",
+  email: "info@dopravaci.cz",
   address: "Jiránkova 1137/1, Praha-Řepy 163 00",
   ic: "76651282",
   owner_name: "Milan Rousek",

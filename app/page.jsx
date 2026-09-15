@@ -18,7 +18,7 @@ export default function Page() {
         url: absoluteUrl("/"),
         image: DEFAULT_SOCIAL_IMAGE,
         telephone: "+420732530802",
-        email: "ivekodopravci@seznam.cz",
+        email: "info@dopravaci.cz",
         identifier: { "@type": "PropertyValue", propertyID: "IČO", value: "76651282" },
         address: {
           "@type": "PostalAddress",
