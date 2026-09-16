@@ -2,9 +2,14 @@ import React from "react";
 import Link from "next/link";
 import { Phone, Mail, Heart } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { COOKIE_SETTINGS_EVENT } from "@/lib/cookie-consent";
 
 export default function Footer() {
   const s = useSiteSettings();
+
+  function openCookieSettings() {
+    window.dispatchEvent(new Event(COOKIE_SETTINGS_EVENT));
+  }
 
   return (
     <footer className="bg-footer-warm text-peach">
@@ -97,6 +102,7 @@ export default function Footer() {
           </div>
           <div className="flex gap-6">
             <Link href="/admin" className="hover:text-terracotta transition-colors">Administrace</Link>
+            <button type="button" onClick={openCookieSettings} className="hover:text-terracotta transition-colors">Nastavení cookies</button>
             <a href="#" className="hover:text-terracotta transition-colors">Ochrana osobních údajů</a>
             <a href="#" className="hover:text-terracotta transition-colors">Podmínky</a>
           </div>

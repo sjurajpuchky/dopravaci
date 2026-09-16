@@ -10,6 +10,7 @@ import {
 import { api } from "@/api/client";
 import { executeRecaptcha } from "@/lib/recaptcha";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 const ELEVATORS = [
   { value: "none", label: "Není" },
@@ -175,6 +176,14 @@ export default function CalculatorWizard() {
         heavy_items: heavyCount,
         cargo,
         note,
+      });
+      trackAnalyticsEvent("calculator_form_submitted", {
+        form_name: "calculator",
+        property_type: propertyType,
+        item_count: itemCount,
+        heavy_item_count: heavyCount,
+        assembly: services.assembly ? 1 : 0,
+        clearance: services.clearance ? 1 : 0,
       });
       setDone(true);
     } catch (err) {

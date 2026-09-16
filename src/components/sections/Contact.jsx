@@ -5,6 +5,7 @@ import { Phone, Mail, MapPin, Clock, Send, Check, Loader2 } from "lucide-react";
 import { api } from "@/api/client";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { executeRecaptcha } from "@/lib/recaptcha";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 function ContactMap({ latitude, longitude, brandName, brandSuffix, address }) {
   const containerRef = useRef(null);
@@ -94,6 +95,7 @@ export default function Contact() {
         cargo: form.cargo,
         note: form.message,
       });
+      trackAnalyticsEvent("contact_form_submitted", { form_name: "contact" });
       setSent(true);
       setTimeout(() => {
         setSent(false);
