@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildCalculatorDetails } from "../src/lib/server/inquiry-details.js";
+import { buildCalculatorDetails, hasRequiredCalculatorElevators } from "../src/lib/server/inquiry-details.js";
 
 test("ukládá úplný a očištěný detail kalkulačky", () => {
   const result = buildCalculatorDetails({
@@ -37,4 +37,10 @@ test("odmítá neplatné číselné hodnoty detailu", () => {
   assert.equal(result.origin.floor, null);
   assert.equal(result.destination.floor, null);
   assert.equal(result.services.extra_hours, null);
+});
+
+test("vyžaduje platnou volbu výtahu na obou adresách", () => {
+  assert.equal(hasRequiredCalculatorElevators({ from_elevator: "none", to_elevator: "6" }), true);
+  assert.equal(hasRequiredCalculatorElevators({ from_elevator: "", to_elevator: "6" }), false);
+  assert.equal(hasRequiredCalculatorElevators({ from_elevator: "3", to_elevator: "jiný" }), false);
 });

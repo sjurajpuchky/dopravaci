@@ -111,8 +111,8 @@ export default function CalculatorWizard() {
   const [propertyType, setPropertyType] = useState("");
   const [items, setItems] = useState({});
   const [otherText, setOtherText] = useState("");
-  const [from, setFrom] = useState({ address: "", addressId: "", floor: 0, elevator: "none" });
-  const [to, setTo] = useState({ address: "", addressId: "", floor: 0, elevator: "none" });
+  const [from, setFrom] = useState({ address: "", addressId: "", floor: 0, elevator: "" });
+  const [to, setTo] = useState({ address: "", addressId: "", floor: 0, elevator: "" });
   const [distance] = useState(15);
   const [services, setServices] = useState({ assembly: false, clearance: false, extraHours: 0 });
   const [contact, setContact] = useState({ name: "", phone: "", email: "", date: "", note: "", consent: false });
@@ -137,7 +137,7 @@ export default function CalculatorWizard() {
       : step === 1
       ? itemCount > 0 || otherText.trim().length > 0
       : step === 2
-      ? Boolean(from.addressId && to.addressId)
+      ? Boolean(from.addressId && to.addressId && from.elevator && to.elevator)
       : true;
 
   const submit = async () => {
@@ -364,13 +364,14 @@ export default function CalculatorWizard() {
                   </Field>
                 </div>
                 <div className="mt-4">
-                  <Field label="Výtah" icon={MoveVertical}>
+                  <Field label="Výtah *" icon={MoveVertical}>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {ELEVATORS.map((e) => (
                         <button
                           key={e.value}
                           type="button"
                           onClick={() => setFrom({ ...from, elevator: e.value })}
+                          aria-pressed={from.elevator === e.value}
                           className={`py-2.5 rounded-[12px] font-mono text-[11px] uppercase tracking-wider transition-colors ${
                             from.elevator === e.value ? "bg-terracotta text-white" : "bg-sand-light text-brown-soft hover:bg-[#E7B781] hover:text-brown"
                           }`}
@@ -379,6 +380,7 @@ export default function CalculatorWizard() {
                         </button>
                       ))}
                     </div>
+                    {!from.elevator && <p className="text-xs text-terracotta mt-2">Vyberte jednu možnost.</p>}
                   </Field>
                 </div>
               </div>
@@ -404,13 +406,14 @@ export default function CalculatorWizard() {
                   </Field>
                 </div>
                 <div className="mt-4">
-                  <Field label="Výtah" icon={MoveVertical}>
+                  <Field label="Výtah *" icon={MoveVertical}>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {ELEVATORS.map((e) => (
                         <button
                           key={e.value}
                           type="button"
                           onClick={() => setTo({ ...to, elevator: e.value })}
+                          aria-pressed={to.elevator === e.value}
                           className={`py-2.5 rounded-[12px] font-mono text-[11px] uppercase tracking-wider transition-colors ${
                             to.elevator === e.value ? "bg-terracotta text-white" : "bg-sand-light text-brown-soft hover:bg-[#E7B781] hover:text-brown"
                           }`}
@@ -419,6 +422,7 @@ export default function CalculatorWizard() {
                         </button>
                       ))}
                     </div>
+                    {!to.elevator && <p className="text-xs text-terracotta mt-2">Vyberte jednu možnost.</p>}
                   </Field>
                 </div>
               </div>

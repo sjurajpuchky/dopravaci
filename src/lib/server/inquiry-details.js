@@ -1,4 +1,9 @@
 const cleanString = (value, maxLength) => typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+const ELEVATOR_VALUES = new Set(["none", "3", "6", "9", "12"]);
+
+export const hasRequiredCalculatorElevators = (body) =>
+  ELEVATOR_VALUES.has(cleanString(body?.from_elevator, 32)) &&
+  ELEVATOR_VALUES.has(cleanString(body?.to_elevator, 32));
 
 const cleanNumber = (value, { integer = false, min = 0, max = 100000 } = {}) => {
   const number = Number(value);
