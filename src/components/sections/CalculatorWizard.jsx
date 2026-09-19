@@ -111,8 +111,8 @@ export default function CalculatorWizard() {
   const [propertyType, setPropertyType] = useState("");
   const [items, setItems] = useState({});
   const [otherText, setOtherText] = useState("");
-  const [from, setFrom] = useState({ address: "", addressId: "", floor: 0, elevator: "" });
-  const [to, setTo] = useState({ address: "", addressId: "", floor: 0, elevator: "" });
+  const [from, setFrom] = useState({ address: "", addressId: "", floor: "", elevator: "" });
+  const [to, setTo] = useState({ address: "", addressId: "", floor: "", elevator: "" });
   const [distance] = useState(15);
   const [services, setServices] = useState({ assembly: false, clearance: false, extraHours: 0 });
   const [contact, setContact] = useState({ name: "", phone: "", email: "", date: "", note: "", consent: false });
@@ -137,7 +137,7 @@ export default function CalculatorWizard() {
       : step === 1
       ? itemCount > 0 || otherText.trim().length > 0
       : step === 2
-      ? Boolean(from.addressId && to.addressId && from.elevator && to.elevator)
+      ? Boolean(from.addressId && to.addressId && from.floor !== "" && to.floor !== "" && from.elevator && to.elevator)
       : true;
 
   const submit = async () => {
@@ -355,8 +355,9 @@ export default function CalculatorWizard() {
                       placeholder="Ulice a číslo, město"
                     />
                   </Field>
-                  <Field label="Patro" icon={Building2}>
+                  <Field label="Patro *" icon={Building2}>
                     <select className="warm-input" value={from.floor} onChange={(e) => setFrom({ ...from, floor: Number(e.target.value) })}>
+                      <option value="" disabled>Vyberte patro</option>
                       {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((f) => (
                         <option key={f} value={f}>{f === 0 ? "Přízemí" : `${f}. patro`}</option>
                       ))}
@@ -397,8 +398,9 @@ export default function CalculatorWizard() {
                       placeholder="Ulice a číslo, město"
                     />
                   </Field>
-                  <Field label="Patro" icon={Building2}>
+                  <Field label="Patro *" icon={Building2}>
                     <select className="warm-input" value={to.floor} onChange={(e) => setTo({ ...to, floor: Number(e.target.value) })}>
+                      <option value="" disabled>Vyberte patro</option>
                       {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((f) => (
                         <option key={f} value={f}>{f === 0 ? "Přízemí" : `${f}. patro`}</option>
                       ))}

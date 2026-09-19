@@ -4,7 +4,7 @@ import { prisma } from "@/lib/server/prisma";
 import { serializeInquiry } from "@/lib/server/serializers";
 import { sendInquiryMail } from "@/lib/server/mail";
 import { consumeInquiryRateLimit, inspectInquirySubmission } from "@/lib/server/inquiry-abuse";
-import { buildCalculatorDetails, hasRequiredCalculatorElevators } from "@/lib/server/inquiry-details";
+import { buildCalculatorDetails, hasRequiredCalculatorElevators, hasRequiredCalculatorFloors } from "@/lib/server/inquiry-details";
 import { verifyRecaptcha } from "@/lib/server/recaptcha";
 
 const INQUIRY_SOURCES = new Set(["calculator", "contact"]);
@@ -44,6 +44,9 @@ export async function POST(request) {
   if (!INQUIRY_SOURCES.has(source)) return fail("Neplatný zdroj poptávky");
   if (source === "calculator" && !hasRequiredCalculatorElevators(body)) {
     return fail("Vyberte výtah u nakládky i vykládky");
+  }
+  if (source === "calculator" && !hasRequiredCalculatorFloors(body)) {
+    return fail("Vyberte patro u nakládky i vykládky");
   }
 
   const submission = inspectInquirySubmission(body);

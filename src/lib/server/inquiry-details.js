@@ -5,6 +5,15 @@ export const hasRequiredCalculatorElevators = (body) =>
   ELEVATOR_VALUES.has(cleanString(body?.from_elevator, 32)) &&
   ELEVATOR_VALUES.has(cleanString(body?.to_elevator, 32));
 
+const isValidFloor = (value) => {
+  if (value === "" || value === null || value === undefined) return false;
+  const floor = Number(value);
+  return Number.isInteger(floor) && floor >= -10 && floor <= 200;
+};
+
+export const hasRequiredCalculatorFloors = (body) =>
+  isValidFloor(body?.from_floor) && isValidFloor(body?.to_floor);
+
 const cleanNumber = (value, { integer = false, min = 0, max = 100000 } = {}) => {
   const number = Number(value);
   if (!Number.isFinite(number) || number < min || number > max) return null;

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildCalculatorDetails, hasRequiredCalculatorElevators } from "../src/lib/server/inquiry-details.js";
+import { buildCalculatorDetails, hasRequiredCalculatorElevators, hasRequiredCalculatorFloors } from "../src/lib/server/inquiry-details.js";
 
 test("ukládá úplný a očištěný detail kalkulačky", () => {
   const result = buildCalculatorDetails({
@@ -43,4 +43,10 @@ test("vyžaduje platnou volbu výtahu na obou adresách", () => {
   assert.equal(hasRequiredCalculatorElevators({ from_elevator: "none", to_elevator: "6" }), true);
   assert.equal(hasRequiredCalculatorElevators({ from_elevator: "", to_elevator: "6" }), false);
   assert.equal(hasRequiredCalculatorElevators({ from_elevator: "3", to_elevator: "jiný" }), false);
+});
+
+test("vyžaduje platnou volbu patra na obou adresách", () => {
+  assert.equal(hasRequiredCalculatorFloors({ from_floor: 0, to_floor: 3 }), true);
+  assert.equal(hasRequiredCalculatorFloors({ from_floor: "", to_floor: 3 }), false);
+  assert.equal(hasRequiredCalculatorFloors({ from_floor: 1, to_floor: "x" }), false);
 });
