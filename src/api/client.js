@@ -44,6 +44,7 @@ export const api = {
   inquiries: {
     create: (data) => request("/api/inquiries", json("POST", data)),
     list: () => request("/api/inquiries"),
+    get: (id) => request(`/api/inquiries/${encodeURIComponent(id)}`),
     update: (id, data) => request(`/api/inquiries/${encodeURIComponent(id)}`, json("PATCH", data)),
     delete: (id) => request(`/api/inquiries/${encodeURIComponent(id)}`, { method: "DELETE" }),
   },

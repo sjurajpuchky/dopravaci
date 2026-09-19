@@ -150,8 +150,15 @@ export default function CalculatorWizard() {
     try {
       const propLabel = PROPERTY_TYPES.find((p) => p.id === propertyType)?.label || "";
       const itemsSummary = Object.entries(items)
+        .filter(([, n]) => n > 0)
         .map(([id, n]) => `${ITEMS.find((x) => x.id === id)?.label} ×${n}`)
         .join(", ");
+      const selectedItems = Object.entries(items)
+        .filter(([, quantity]) => quantity > 0)
+        .map(([id, quantity]) => {
+          const item = ITEMS.find((candidate) => candidate.id === id);
+          return { id, label: item?.label || id, quantity, heavy: Boolean(item?.heavy) };
+        });
       const cargo = [propLabel, itemsSummary, otherText.trim() && `ostatní: ${otherText.trim()}`].filter(Boolean).join(" · ");
       const note = [
         services.assembly ? "montáž/demontáž" : "",
@@ -176,6 +183,18 @@ export default function CalculatorWizard() {
         heavy_items: heavyCount,
         cargo,
         note,
+        property_type: propertyType,
+        property_type_label: propLabel,
+        items: selectedItems,
+        other_items: otherText,
+        move_date: contact.date,
+        from_floor: from.floor,
+        from_elevator: from.elevator,
+        to_floor: to.floor,
+        to_elevator: to.elevator,
+        assembly: services.assembly,
+        clearance: services.clearance,
+        extra_hours: services.extraHours,
       });
       trackAnalyticsEvent("calculator_form_submitted", {
         form_name: "calculator",

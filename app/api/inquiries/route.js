@@ -4,6 +4,7 @@ import { prisma } from "@/lib/server/prisma";
 import { serializeInquiry } from "@/lib/server/serializers";
 import { sendInquiryMail } from "@/lib/server/mail";
 import { consumeInquiryRateLimit, inspectInquirySubmission } from "@/lib/server/inquiry-abuse";
+import { buildCalculatorDetails } from "@/lib/server/inquiry-details";
 import { verifyRecaptcha } from "@/lib/server/recaptcha";
 
 const INQUIRY_SOURCES = new Set(["calculator", "contact"]);
@@ -86,6 +87,8 @@ export async function POST(request) {
       heavyItems: Boolean(body?.heavy_items),
       cargo: cleanString(body?.cargo, 10000) || null,
       note: cleanString(body?.note, 10000) || null,
+      source,
+      details: source === "calculator" ? buildCalculatorDetails(body) : undefined,
       createdById: user?.id || null,
     },
     include: { takenBy: true },

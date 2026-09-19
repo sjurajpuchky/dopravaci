@@ -88,6 +88,8 @@ model Inquiry {
   heavyItems  Boolean       @default(false) @map("heavy_items")
   cargo       String?       @db.Text
   note        String?       @db.Text
+  source      String        @default("contact") @db.VarChar(32)
+  details     Json?
   status      InquiryStatus @default(NEW)
   commission  Float?
   createdAt   DateTime      @default(now()) @map("created_at")

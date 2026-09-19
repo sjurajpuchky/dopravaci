@@ -1,9 +1,19 @@
-import { requireAdmin } from "@/lib/server/auth";
+import { requireAdmin, requireApprovedUser } from "@/lib/server/auth";
 import { cleanString, fail, ok, readJson } from "@/lib/server/http";
 import { prisma } from "@/lib/server/prisma";
 import { serializeInquiry } from "@/lib/server/serializers";
 
 const STATUSES = { new: "NEW", taken: "TAKEN", completed: "COMPLETED" };
+
+export async function GET(_request, { params }) {
+  const auth = await requireApprovedUser();
+  if (auth.error) return fail(auth.error, auth.status);
+  const { id } = await params;
+  const where = auth.user.role === "ADMIN" ? { id } : { id, takenById: auth.user.id };
+  const inquiry = await prisma.inquiry.findFirst({ where, include: { takenBy: true } });
+  if (!inquiry) return fail("Poptávka nebyla nalezena", 404);
+  return ok(serializeInquiry(inquiry));
+}
 
 export async function PATCH(request, { params }) {
   const auth = await requireAdmin();

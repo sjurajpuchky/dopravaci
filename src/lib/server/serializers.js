@@ -31,6 +31,8 @@ export function serializeInquiry(inquiry) {
     heavy_items: inquiry.heavyItems,
     cargo: inquiry.cargo,
     note: inquiry.note,
+    source: inquiry.source,
+    details: inquiry.details && typeof inquiry.details === "object" ? inquiry.details : null,
     status: lower(inquiry.status),
     taken_by_id: inquiry.takenById,
     taken_by_name: inquiry.takenBy?.email || inquiry.takenBy?.fullName || null,

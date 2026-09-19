@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { api } from "@/api/client";
-import { Loader2, Trash2, CheckCircle2, UserPlus, Phone, Mail, MapPin, Package } from "lucide-react";
+import Link from "next/link";
+import { Loader2, Trash2, CheckCircle2, UserPlus, Phone, Mail, MapPin, Package, Eye, Building2 } from "lucide-react";
 
 const STATUS = {
   new: { label: "Nová", cls: "bg-amber/20 text-amber" },
@@ -9,6 +10,8 @@ const STATUS = {
 };
 
 const approvalOf = (u) => u?.approval_status || u?.data?.approval_status || "pending";
+const sourceLabel = (source) => source === "calculator" ? "Kalkulačka" : source === "contact" ? "Kontaktní formulář" : "Neuvedeno";
+const elevatorLabel = (value) => value === "none" ? "bez výtahu" : value ? `výtah pro ${value} osob` : "neuvedeno";
 
 export default function InquiriesPanel() {
   const [items, setItems] = useState(null);
@@ -90,6 +93,9 @@ export default function InquiriesPanel() {
                       {STATUS[p.status]?.label}
                     </span>
                     <span className="font-display font-bold text-brown">{p.name}</span>
+                    <span className="px-2 py-0.5 border border-white/15 font-mono text-[10px] uppercase tracking-wider text-steel">
+                      {sourceLabel(p.source)}
+                    </span>
                     <span className="font-mono text-[10px] text-steel-dim uppercase">
                       {new Date(p.created_date).toLocaleDateString("cs-CZ")}
                     </span>
@@ -116,6 +122,16 @@ export default function InquiriesPanel() {
                     )}
                   </div>
                   {p.cargo && <div className="text-sm text-steel-dim mt-2">Náklad: {p.cargo}</div>}
+                  {p.source === "calculator" && p.details && (
+                    <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-x-5 gap-y-1 mt-2 text-xs text-steel-dim">
+                      {p.details.property_type_label && (
+                        <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5" /> {p.details.property_type_label}</span>
+                      )}
+                      <span>Nakládka: {p.details.origin?.floor ?? "—"}. patro, {elevatorLabel(p.details.origin?.elevator)}</span>
+                      <span>Vykládka: {p.details.destination?.floor ?? "—"}. patro, {elevatorLabel(p.details.destination?.elevator)}</span>
+                      {p.details.items?.length > 0 && <span className="sm:col-span-2 xl:col-span-3">Vybavení: {p.details.items.map((item) => `${item.label} ×${item.quantity}`).join(", ")}</span>}
+                    </div>
+                  )}
                   {p.note && <div className="text-sm text-steel-dim mt-1">{p.note}</div>}
                   {p.taken_by_name && (
                     <div className="text-xs text-amber mt-2 font-mono">
@@ -125,6 +141,12 @@ export default function InquiriesPanel() {
                   )}
                 </div>
                 <div className="flex gap-2 shrink-0">
+                  <Link
+                    href={`/admin/inquiries/${encodeURIComponent(p.id)}`}
+                    className="btn-industrial border border-white/20 text-brown font-display font-bold text-xs uppercase tracking-wider px-4 py-2 flex items-center gap-1.5 hover:border-amber hover:text-amber"
+                  >
+                    <Eye className="w-4 h-4" /> Detail
+                  </Link>
                   {p.status === "new" && (
                     <button
                       onClick={() => {
