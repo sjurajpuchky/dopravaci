@@ -38,16 +38,16 @@ Nová poptávka z kalkulačky i kontaktního formuláře se odešle skrytě vše
 uživatelům s rolí `ADMIN`; pokud žádný administrátor neexistuje, použije se
 kontaktní e-mail z nastavení webu.
 
-## Google reCAPTCHA v3
+## Google reCAPTCHA v2
 
-Kalkulačka i kontaktní formulář jsou chráněné Google reCAPTCHA v3. V Google
-reCAPTCHA administraci založte v3 klíč pro produkční domény a nastavte
-`NEXT_PUBLIC_RECAPTCHA_SITE_KEY` a serverový `RECAPTCHA_SECRET_KEY`. Volitelně
-lze upravit hranici pomocí `RECAPTCHA_MIN_SCORE` (výchozí `0.7`) a povolit
-konkrétní domény přes čárkou oddělené `RECAPTCHA_ALLOWED_HOSTNAMES`.
+Kalkulačka i kontaktní formulář jsou chráněné Google reCAPTCHA v2 s viditelným
+checkboxem. V Google reCAPTCHA administraci založte klíče typu „Výzva (v2)“
+pro produkční domény a nastavte `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` a serverový
+`RECAPTCHA_SECRET_KEY`. Původní klíče z reCAPTCHA v3 nelze použít. Volitelně
+lze povolit konkrétní domény přes čárkou oddělené
+`RECAPTCHA_ALLOWED_HOSTNAMES`.
 
-Backend vždy ověřuje úspěch, skóre a správnou akci (`inquiry_calculator` nebo
-`inquiry_contact`); při nastaveném seznamu domén kontroluje také hostname.
+Backend vždy ověřuje platnost tokenu a při nastaveném seznamu domén také hostname.
 Bez serverového klíče se formuláře z bezpečnostních důvodů neodešlou.
 Ochranu doplňuje skryté honeypot pole, kontrola doby vyplnění a serverový limit
 pěti přijatých poptávek z jedné IP adresy během 15 minut.

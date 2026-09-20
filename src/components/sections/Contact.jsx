@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Phone, Mail, MapPin, Clock, Send, Check, Loader2 } from "lucide-react";
 import { api } from "@/api/client";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { executeRecaptcha } from "@/lib/recaptcha";
+import RecaptchaV2 from "@/components/RecaptchaV2";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 
 function ContactMap({ latitude, longitude, brandName, brandSuffix, address }) {
@@ -70,6 +70,8 @@ export default function Contact() {
   const [form, setForm] = useState({ name: "", phone: "", email: "", cargo: "", message: "" });
   const [companyWebsite, setCompanyWebsite] = useState("");
   const [formStartedAt, setFormStartedAt] = useState(() => Date.now());
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaRef = useRef(null);
 
   const contactItems = [
     { icon: Phone, label: "Telefon", value: s.phone, href: s.phone_href },
@@ -81,9 +83,12 @@ export default function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    if (!captchaToken) {
+      setError("Potvrďte prosím, že nejste robot.");
+      return;
+    }
     setSending(true);
     try {
-      const captchaToken = await executeRecaptcha("inquiry_contact");
       await api.inquiries.create({
         source: "contact",
         captcha_token: captchaToken,
@@ -102,9 +107,11 @@ export default function Contact() {
         setForm({ name: "", phone: "", email: "", cargo: "", message: "" });
         setCompanyWebsite("");
         setFormStartedAt(Date.now());
+        setCaptchaToken("");
       }, 4000);
     } catch (err) {
       setError(err?.response?.data?.error || err.message || "Odeslání selhalo");
+      captchaRef.current?.reset();
     } finally {
       setSending(false);
     }
@@ -206,6 +213,7 @@ export default function Contact() {
                     className="warm-input resize-none"
                   />
                 </div>
+                <RecaptchaV2 ref={captchaRef} onChange={setCaptchaToken} />
                 {error && (
                   <div role="alert" className="p-3 bg-red-500/10 border border-red-500/30 text-red-700 text-sm rounded-[13px]">{error}</div>
                 )}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Utensils, Box, Music, Archive, Tv, MapPin, Building2, MoveVertical,
   Trash2, Wrench, Plus, Minus, ArrowLeft, ArrowRight, Check, Loader2, Send,
@@ -8,8 +8,8 @@ import {
   Crown, Frame, Lamp, Layers, Bike, Flower,
 } from "lucide-react";
 import { api } from "@/api/client";
-import { executeRecaptcha } from "@/lib/recaptcha";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
+import RecaptchaV2 from "@/components/RecaptchaV2";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 
 const ELEVATORS = [
@@ -121,6 +121,8 @@ export default function CalculatorWizard() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaRef = useRef(null);
 
   const setItem = (id, delta) =>
     setItems((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] || 0) + delta) }));
@@ -146,6 +148,10 @@ export default function CalculatorWizard() {
       setError("Vyplňte jméno, telefon a odsouhlaste podmínky.");
       return;
     }
+    if (!captchaToken) {
+      setError("Potvrďte prosím, že nejste robot.");
+      return;
+    }
     setSubmitting(true);
     try {
       const propLabel = PROPERTY_TYPES.find((p) => p.id === propertyType)?.label || "";
@@ -167,7 +173,6 @@ export default function CalculatorWizard() {
         contact.note,
       ].filter(Boolean).join(" · ");
 
-      const captchaToken = await executeRecaptcha("inquiry_calculator");
       await api.inquiries.create({
         source: "calculator",
         captcha_token: captchaToken,
@@ -207,6 +212,7 @@ export default function CalculatorWizard() {
       setDone(true);
     } catch (err) {
       setError(err?.response?.data?.error || err.message || "Odeslání selhalo");
+      captchaRef.current?.reset();
     } finally {
       setSubmitting(false);
     }
@@ -512,6 +518,7 @@ export default function CalculatorWizard() {
                 tabIndex={-1}
               />
             </div>
+            <RecaptchaV2 ref={captchaRef} onChange={setCaptchaToken} />
             {error && <div role="alert" className="mt-4 p-3 bg-red-500/10 border border-red-500/30 text-red-700 text-sm rounded-[13px]">{error}</div>}
           </div>
         )}

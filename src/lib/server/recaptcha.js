@@ -1,13 +1,4 @@
 const VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
-const DEFAULT_MIN_SCORE = 0.7;
-
-function minimumScore() {
-  const rawValue = (process.env.RECAPTCHA_MIN_SCORE || "").trim();
-  const configured = rawValue ? Number(rawValue) : Number.NaN;
-  return Number.isFinite(configured) && configured >= 0 && configured <= 1
-    ? configured
-    : DEFAULT_MIN_SCORE;
-}
 
 function allowedHostnames() {
   const hostnames = new Set(
@@ -25,7 +16,7 @@ function allowedHostnames() {
   return hostnames;
 }
 
-export async function verifyRecaptcha(token, expectedAction) {
+export async function verifyRecaptcha(token) {
   const secret = (process.env.RECAPTCHA_SECRET_KEY || "").trim();
   if (!secret) return { ok: false, reason: "not-configured" };
   if (typeof token !== "string" || !token.trim()) return { ok: false, reason: "missing-token" };
@@ -50,12 +41,6 @@ export async function verifyRecaptcha(token, expectedAction) {
   }
 
   if (payload?.success !== true) return { ok: false, reason: "rejected" };
-  if (payload.action !== expectedAction) return { ok: false, reason: "action-mismatch" };
-
-  const score = Number(payload.score);
-  if (!Number.isFinite(score) || score < minimumScore()) {
-    return { ok: false, reason: "low-score", score: Number.isFinite(score) ? score : null };
-  }
 
   const hostnames = allowedHostnames();
   const hostname = typeof payload.hostname === "string" ? payload.hostname.toLowerCase() : "";
@@ -63,7 +48,7 @@ export async function verifyRecaptcha(token, expectedAction) {
     return { ok: false, reason: "hostname-mismatch" };
   }
 
-  return { ok: true, score };
+  return { ok: true };
 }
 
 export function recaptchaFailureMessage(reason) {
@@ -72,14 +57,11 @@ export function recaptchaFailureMessage(reason) {
       return "Google reCAPTCHA není správně nakonfigurovaná. Zprávu nyní nelze odeslat.";
     case "verification-unavailable":
       return "Google reCAPTCHA je dočasně nedostupná. Zkuste zprávu odeslat znovu za chvíli.";
-    case "low-score":
-      return "Google reCAPTCHA vyhodnotila odeslání jako podezřelé. Počkejte chvíli a zkuste to znovu.";
     case "hostname-mismatch":
       return "Google reCAPTCHA není správně nastavená pro tuto doménu. Zprávu nyní nelze odeslat.";
     case "missing-token":
     case "rejected":
-    case "action-mismatch":
     default:
-      return "Ověření Google reCAPTCHA vypršelo nebo je neplatné. Zkuste zprávu odeslat znovu.";
+      return "Ověření Google reCAPTCHA vypršelo nebo je neplatné. Zaškrtněte prosím ověření znovu.";
   }
 }

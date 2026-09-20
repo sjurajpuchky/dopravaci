@@ -11,14 +11,12 @@ import {
 const originalFetch = global.fetch;
 const originalEnvironment = {
   RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
-  RECAPTCHA_MIN_SCORE: process.env.RECAPTCHA_MIN_SCORE,
   RECAPTCHA_ALLOWED_HOSTNAMES: process.env.RECAPTCHA_ALLOWED_HOSTNAMES,
 };
 
 beforeEach(() => {
   clearInquiryRateLimits();
   process.env.RECAPTCHA_SECRET_KEY = "test-secret";
-  process.env.RECAPTCHA_MIN_SCORE = "0.5";
   process.env.RECAPTCHA_ALLOWED_HOSTNAMES = "dopravaci.cz,www.dopravaci.cz";
 });
 
@@ -42,57 +40,36 @@ function mockGoogleResponse(payload, status = 200) {
   };
 }
 
-test("accepts a matching action, score and hostname", async () => {
+test("accepts a valid v2 token for an allowed hostname", async () => {
   mockGoogleResponse({
     success: true,
-    action: "inquiry_contact",
-    score: 0.9,
     hostname: "dopravaci.cz",
   });
 
-  const result = await verifyRecaptcha("browser-token", "inquiry_contact");
+  const result = await verifyRecaptcha("browser-token");
 
-  assert.deepEqual(result, { ok: true, score: 0.9 });
+  assert.deepEqual(result, { ok: true });
 });
 
-test("rejects a token issued for a different form action", async () => {
+test("rejects a token declined by Google", async () => {
   mockGoogleResponse({
-    success: true,
-    action: "inquiry_contact",
-    score: 0.9,
-    hostname: "dopravaci.cz",
+    success: false,
+    "error-codes": ["timeout-or-duplicate"],
   });
 
-  const result = await verifyRecaptcha("browser-token", "inquiry_calculator");
+  const result = await verifyRecaptcha("browser-token");
 
   assert.equal(result.ok, false);
-  assert.equal(result.reason, "action-mismatch");
-});
-
-test("rejects a low score", async () => {
-  mockGoogleResponse({
-    success: true,
-    action: "inquiry_calculator",
-    score: 0.49,
-    hostname: "dopravaci.cz",
-  });
-
-  const result = await verifyRecaptcha("browser-token", "inquiry_calculator");
-
-  assert.equal(result.ok, false);
-  assert.equal(result.reason, "low-score");
-  assert.equal(result.score, 0.49);
+  assert.equal(result.reason, "rejected");
 });
 
 test("rejects a hostname outside the configured allowlist", async () => {
   mockGoogleResponse({
     success: true,
-    action: "inquiry_contact",
-    score: 0.9,
     hostname: "example.com",
   });
 
-  const result = await verifyRecaptcha("browser-token", "inquiry_contact");
+  const result = await verifyRecaptcha("browser-token");
 
   assert.equal(result.ok, false);
   assert.equal(result.reason, "hostname-mismatch");
@@ -102,13 +79,21 @@ test("fails closed when the server secret is not configured", async () => {
   delete process.env.RECAPTCHA_SECRET_KEY;
   global.fetch = async () => assert.fail("Google must not be called without configuration");
 
-  const result = await verifyRecaptcha("browser-token", "inquiry_contact");
+  const result = await verifyRecaptcha("browser-token");
 
   assert.deepEqual(result, { ok: false, reason: "not-configured" });
 });
 
+test("rejects a missing checkbox token without contacting Google", async () => {
+  global.fetch = async () => assert.fail("Google must not be called without a token");
+
+  const result = await verifyRecaptcha("");
+
+  assert.deepEqual(result, { ok: false, reason: "missing-token" });
+});
+
 test("returns a clear user message for every reCAPTCHA failure", () => {
-  for (const reason of ["not-configured", "verification-unavailable", "low-score", "hostname-mismatch", "missing-token", "rejected", "action-mismatch"]) {
+  for (const reason of ["not-configured", "verification-unavailable", "hostname-mismatch", "missing-token", "rejected"]) {
     const message = recaptchaFailureMessage(reason);
     assert.match(message, /Google reCAPTCHA/);
     assert.ok(message.length > 30);

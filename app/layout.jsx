@@ -78,8 +78,8 @@ export default function RootLayout({ children }) {
       <body>
         {RECAPTCHA_SITE_KEY ? (
           <Script
-            id="google-recaptcha-v3"
-            src={`https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(RECAPTCHA_SITE_KEY)}`}
+            id="google-recaptcha-v2"
+            src="https://www.google.com/recaptcha/api.js?render=explicit&hl=cs"
             strategy="afterInteractive"
           />
         ) : null}

@@ -8,10 +8,6 @@ import { buildCalculatorDetails, hasRequiredCalculatorElevators, hasRequiredCalc
 import { recaptchaFailureMessage, verifyRecaptcha } from "@/lib/server/recaptcha";
 
 const INQUIRY_SOURCES = new Set(["calculator", "contact"]);
-const CAPTCHA_ACTIONS = {
-  calculator: "inquiry_calculator",
-  contact: "inquiry_contact",
-};
 
 async function notifyAdmins(inquiry, source) {
   try {
@@ -55,18 +51,14 @@ export async function POST(request) {
     return fail("Formulář vypršel. Obnovte stránku a zkuste to znovu.", 400);
   }
 
-  const captcha = await verifyRecaptcha(
-    cleanString(body?.captcha_token, 4096),
-    CAPTCHA_ACTIONS[source],
-  );
+  const captcha = await verifyRecaptcha(cleanString(body?.captcha_token, 4096));
   if (!captcha.ok) {
     if (captcha.reason === "not-configured") {
-      console.error("Google reCAPTCHA v3 není nakonfigurovaná");
+      console.error("Google reCAPTCHA v2 není nakonfigurovaná");
     }
-    console.warn("Google reCAPTCHA v3 odmítla poptávku", {
+    console.warn("Google reCAPTCHA v2 odmítla poptávku", {
       source,
       reason: captcha.reason,
-      score: captcha.score,
     });
     const serviceError = ["not-configured", "verification-unavailable", "hostname-mismatch"].includes(captcha.reason);
     return fail(recaptchaFailureMessage(captcha.reason), serviceError ? 503 : 400, {
