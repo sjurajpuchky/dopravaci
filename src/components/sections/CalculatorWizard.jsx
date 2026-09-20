@@ -512,7 +512,7 @@ export default function CalculatorWizard() {
                 tabIndex={-1}
               />
             </div>
-            {error && <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 text-red-700 text-sm rounded-[13px]">{error}</div>}
+            {error && <div role="alert" className="mt-4 p-3 bg-red-500/10 border border-red-500/30 text-red-700 text-sm rounded-[13px]">{error}</div>}
           </div>
         )}
 

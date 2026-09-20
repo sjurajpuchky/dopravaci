@@ -15,7 +15,7 @@ function waitForRecaptcha() {
         resolve(window.grecaptcha);
       } else if (Date.now() - startedAt >= LOAD_TIMEOUT_MS) {
         window.clearInterval(interval);
-        reject(new Error("Ověření proti spamu se nepodařilo načíst. Zkuste to prosím znovu."));
+        reject(new Error("Google reCAPTCHA se nepodařila načíst. Zkontrolujte připojení a zkuste to znovu."));
       }
     }, 100);
   });
@@ -23,7 +23,7 @@ function waitForRecaptcha() {
 
 export async function executeRecaptcha(action) {
   if (!RECAPTCHA_SITE_KEY) {
-    throw new Error("Odeslání formuláře není momentálně dostupné.");
+    throw new Error("Google reCAPTCHA není správně nakonfigurovaná. Zprávu nyní nelze odeslat.");
   }
 
   const recaptcha = await waitForRecaptcha();
@@ -34,7 +34,7 @@ export async function executeRecaptcha(action) {
         if (!token) throw new Error("Google reCAPTCHA nevrátila ověřovací token.");
         resolve(token);
       } catch {
-        reject(new Error("Ověření proti spamu se nezdařilo. Zkuste to prosím znovu."));
+        reject(new Error("Google reCAPTCHA ověření nedokončila. Zkuste zprávu odeslat znovu."));
       }
     });
   });

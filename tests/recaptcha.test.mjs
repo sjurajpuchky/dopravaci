@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, test } from "node:test";
 
-import { verifyRecaptcha } from "../src/lib/server/recaptcha.js";
+import { recaptchaFailureMessage, verifyRecaptcha } from "../src/lib/server/recaptcha.js";
 import {
   clearInquiryRateLimits,
   consumeInquiryRateLimit,
@@ -105,6 +105,14 @@ test("fails closed when the server secret is not configured", async () => {
   const result = await verifyRecaptcha("browser-token", "inquiry_contact");
 
   assert.deepEqual(result, { ok: false, reason: "not-configured" });
+});
+
+test("returns a clear user message for every reCAPTCHA failure", () => {
+  for (const reason of ["not-configured", "verification-unavailable", "low-score", "hostname-mismatch", "missing-token", "rejected", "action-mismatch"]) {
+    const message = recaptchaFailureMessage(reason);
+    assert.match(message, /Google reCAPTCHA/);
+    assert.ok(message.length > 30);
+  }
 });
 
 test("rejects honeypot and implausibly fast submissions", () => {

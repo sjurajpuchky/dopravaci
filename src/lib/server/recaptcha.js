@@ -65,3 +65,21 @@ export async function verifyRecaptcha(token, expectedAction) {
 
   return { ok: true, score };
 }
+
+export function recaptchaFailureMessage(reason) {
+  switch (reason) {
+    case "not-configured":
+      return "Google reCAPTCHA není správně nakonfigurovaná. Zprávu nyní nelze odeslat.";
+    case "verification-unavailable":
+      return "Google reCAPTCHA je dočasně nedostupná. Zkuste zprávu odeslat znovu za chvíli.";
+    case "low-score":
+      return "Google reCAPTCHA vyhodnotila odeslání jako podezřelé. Počkejte chvíli a zkuste to znovu.";
+    case "hostname-mismatch":
+      return "Google reCAPTCHA není správně nastavená pro tuto doménu. Zprávu nyní nelze odeslat.";
+    case "missing-token":
+    case "rejected":
+    case "action-mismatch":
+    default:
+      return "Ověření Google reCAPTCHA vypršelo nebo je neplatné. Zkuste zprávu odeslat znovu.";
+  }
+}

@@ -207,7 +207,7 @@ export default function Contact() {
                   />
                 </div>
                 {error && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-700 text-sm rounded-[13px]">{error}</div>
+                  <div role="alert" className="p-3 bg-red-500/10 border border-red-500/30 text-red-700 text-sm rounded-[13px]">{error}</div>
                 )}
                 <button
                   type="submit"
