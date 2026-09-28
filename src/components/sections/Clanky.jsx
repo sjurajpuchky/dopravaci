@@ -4,15 +4,16 @@ import { ArrowUpRight } from "lucide-react";
 import { api } from "@/api/client";
 import { Image } from "@/components/ui/image";
 
-export default function Clanky() {
-  const [items, setItems] = useState(null);
+export default function Clanky({ initialItems = null }) {
+  const [items, setItems] = useState(initialItems);
 
   useEffect(() => {
+    if (initialItems !== null) return;
     api.articles
       .public()
       .then((rows) => setItems((rows || []).slice(0, 3)))
       .catch(() => setItems([]));
-  }, []);
+  }, [initialItems]);
 
   if (!items || items.length === 0) return null;
 

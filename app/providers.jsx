@@ -6,16 +6,19 @@ import { queryClientInstance } from "@/lib/query-client";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Toaster } from "@/components/ui/toaster";
 import CookieBanner from "@/components/CookieBanner";
+import { SiteSettingsProvider } from "@/hooks/useSiteSettings";
 
-export default function Providers({ children }) {
+export default function Providers({ children, initialSettings }) {
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <ScrollToTop />
-        {children}
-        <Toaster />
-        <CookieBanner />
-      </QueryClientProvider>
-    </AuthProvider>
+    <SiteSettingsProvider initialSettings={initialSettings}>
+      <AuthProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <ScrollToTop />
+          {children}
+          <Toaster />
+          <CookieBanner />
+        </QueryClientProvider>
+      </AuthProvider>
+    </SiteSettingsProvider>
   );
 }

@@ -3,12 +3,13 @@ import { X, ChevronLeft, ChevronRight, ZoomIn, Loader2 } from "lucide-react";
 import { Image } from "@/components/ui/image";
 import { api } from "@/api/client";
 
-export default function Gallery() {
-  const [photos, setPhotos] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function Gallery({ initialPhotos = null }) {
+  const [photos, setPhotos] = useState(initialPhotos || []);
+  const [loading, setLoading] = useState(initialPhotos === null);
   const [active, setActive] = useState(null);
 
   useEffect(() => {
+    if (initialPhotos !== null) return;
     let activeReq = true;
     api.gallery
       .public()
@@ -22,7 +23,7 @@ export default function Gallery() {
         if (activeReq) setLoading(false);
       });
     return () => { activeReq = false; };
-  }, []);
+  }, [initialPhotos]);
 
   const close = () => setActive(null);
   const prev = () => setActive((i) => (i === null ? null : (i - 1 + photos.length) % photos.length));

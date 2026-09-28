@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+"use client";
+
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "@/api/client";
 
 export const DEFAULT_SETTINGS = {
@@ -50,11 +52,23 @@ export const DEFAULT_SETTINGS = {
 
 let cache = null;
 
+const SiteSettingsContext = createContext(null);
+
+export function SiteSettingsProvider({ initialSettings, children }) {
+  const settings = useMemo(
+    () => (initialSettings ? { ...DEFAULT_SETTINGS, ...initialSettings } : null),
+    [initialSettings]
+  );
+
+  return <SiteSettingsContext.Provider value={settings}>{children}</SiteSettingsContext.Provider>;
+}
+
 export function useSiteSettings() {
+  const serverSettings = useContext(SiteSettingsContext);
   const [settings, setSettings] = useState(cache || DEFAULT_SETTINGS);
 
   useEffect(() => {
-    if (cache) return;
+    if (serverSettings || cache) return;
     let active = true;
     api.settings
       .public()
@@ -68,7 +82,7 @@ export function useSiteSettings() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [serverSettings]);
 
-  return settings;
+  return serverSettings || settings;
 }

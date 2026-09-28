@@ -4,6 +4,8 @@ import Script from "next/script";
 import Providers from "./providers";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { prisma } from "@/lib/server/prisma";
+import { serializeSettings } from "@/lib/server/serializers";
 
 const GOOGLE_TAG_ID = (process.env.GOOGLE_TAG_ID || "G-FN28LJKTQT").trim().toUpperCase();
 const RECAPTCHA_SITE_KEY = (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "").trim();
@@ -72,7 +74,15 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  let initialSettings = null;
+  try {
+    const settings = await prisma.siteSettings.findFirst({ orderBy: { updatedAt: "desc" } });
+    initialSettings = settings ? serializeSettings(settings) : null;
+  } catch {
+    // Defaults render on the server and the client retries through the public API.
+  }
+
   return (
     <html lang="cs-CZ">
       <body>
@@ -84,7 +94,7 @@ export default function RootLayout({ children }) {
           />
         ) : null}
         <GoogleAnalytics measurementId={GOOGLE_TAG_ID} />
-        <Providers>{children}</Providers>
+        <Providers initialSettings={initialSettings}>{children}</Providers>
       </body>
     </html>
   );

@@ -1,5 +1,9 @@
 import Home from "@/screens/Home";
 import { absoluteUrl, DEFAULT_SOCIAL_IMAGE, publicMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo";
+import { prisma } from "@/lib/server/prisma";
+import { serializeArticle, serializeGalleryItem } from "@/lib/server/serializers";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = publicMetadata({
   title: "Stěhování a doprava Praha | Dopravaci.cz",
@@ -7,7 +11,27 @@ export const metadata = publicMetadata({
   path: "/",
 });
 
-export default function Page() {
+export default async function Page() {
+  let initialArticles = null;
+  let initialGallery = null;
+
+  try {
+    const [articles, gallery] = await Promise.all([
+      prisma.article.findMany({
+        where: { published: true },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+      }),
+      prisma.galleryItem.findMany({
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      }),
+    ]);
+    initialArticles = articles.map(serializeArticle);
+    initialGallery = gallery.map(serializeGalleryItem);
+  } catch {
+    // Client-side API requests remain as a fallback during a temporary DB outage.
+  }
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -55,7 +79,7 @@ export default function Page() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <Home />
+      <Home initialArticles={initialArticles} initialGallery={initialGallery} />
     </>
   );
 }

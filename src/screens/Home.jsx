@@ -11,7 +11,7 @@ import Clanky from "@/components/sections/Clanky";
 import Contact from "@/components/sections/Contact";
 import Footer from "@/components/sections/Footer";
 
-export default function Home() {
+export default function Home({ initialArticles = null, initialGallery = null }) {
   return (
     <div className="bg-sand min-h-screen">
       <Navbar />
@@ -19,8 +19,8 @@ export default function Home() {
       <About />
       <Calculator />
       <Articles />
-      <Gallery />
-      <Clanky />
+      <Gallery initialPhotos={initialGallery} />
+      <Clanky initialItems={initialArticles} />
       <Contact />
       <Footer />
     </div>
