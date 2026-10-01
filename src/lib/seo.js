@@ -1,8 +1,8 @@
 export const SITE_NAME = "Dopravaci.cz";
 export const SITE_DESCRIPTION =
-  "Stěhování, rozvoz nábytku a přeprava těžkých i nestandardních předmětů v Praze, okolí a po celé ČR.";
+  "Specializovaná přeprava nadrozměrných a velkotonážních nákladů, lopatek větrných elektráren, rour, potrubních dílů a průmyslových technologií.";
 export const DEFAULT_SOCIAL_IMAGE =
-  "https://9b5be8ccee.clvaw-cdnwnd.com/c87cac2004e4f81ce02f7a618256653c/200000000-bb95ebb960/1.jpeg?ph=9b5be8ccee";
+  "/images/oversize-transport-hero.webp";
 
 function normalizeSiteUrl(value) {
   try {

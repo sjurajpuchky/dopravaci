@@ -327,3 +327,44 @@ input[type="range"].industrial-range::-moz-range-thumb {
 .article-content a { color: var(--terracotta); text-decoration: underline; }
 .article-content blockquote { border-left: 3px solid var(--terracotta); padding-left: 1rem; margin: 1em 0; color: var(--brown); font-style: italic; }
 .article-content img { max-width: 100%; height: auto; margin: 1em 0; }
+
+/* Public transport-company business card */
+.transport-site { font-family: var(--font-body); scroll-behavior: smooth; }
+.transport-hero-overlay {
+  background:
+    linear-gradient(90deg, rgba(7, 12, 17, 0.96) 0%, rgba(7, 12, 17, 0.82) 36%, rgba(7, 12, 17, 0.24) 72%, rgba(7, 12, 17, 0.12) 100%),
+    linear-gradient(0deg, rgba(7, 12, 17, 0.32), rgba(7, 12, 17, 0.08));
+}
+.transport-kicker {
+  font-family: var(--font-mono);
+  color: #c97e00;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.transport-nav-cta, .transport-primary-cta, .transport-secondary-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 46px;
+  padding: 0.75rem 1rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+.transport-nav-cta, .transport-primary-cta { background: #f5a623; color: #101820; }
+.transport-nav-cta:hover, .transport-primary-cta:hover { background: #ffb93f; transform: translateY(-1px); }
+.transport-primary-cta, .transport-secondary-cta { min-height: 54px; padding-inline: 1.35rem; }
+.transport-secondary-cta {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(10, 17, 23, 0.35);
+  color: white;
+  backdrop-filter: blur(8px);
+}
+.transport-secondary-cta:hover { border-color: rgba(255, 255, 255, 0.6); background: rgba(10, 17, 23, 0.65); }
+.transport-site *:focus-visible { outline-color: #f5a623 !important; }
+@media (max-width: 640px) {
+  .transport-hero-overlay { background: linear-gradient(90deg, rgba(7, 12, 17, 0.92), rgba(7, 12, 17, 0.58)); }
+}
