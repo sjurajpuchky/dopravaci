@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { api } from "@/api/client";
-import { Loader2, Upload, Save, Check, Plus, Trash2 } from "lucide-react";
-import { DEFAULT_SETTINGS } from "@/hooks/useSiteSettings";
+import { Check, Loader2, Plus, Save, Trash2, Upload } from "lucide-react";
+import { DEFAULT_SETTINGS, mergeHomepageContent } from "@/lib/site-settings-defaults";
 
 const BUILTINS = ["id", "created_date", "updated_date", "created_by_id"];
 
@@ -9,39 +9,63 @@ export default function SettingsPanel() {
   const [settings, setSettings] = useState(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
   const [uploadingField, setUploadingField] = useState("");
 
   useEffect(() => {
     api.settings.get().then((row) => {
-      if (row) {
-        setSettings({ ...DEFAULT_SETTINGS, ...row });
-      } else {
-        setSettings({ ...DEFAULT_SETTINGS });
-      }
-    });
+      const merged = { ...DEFAULT_SETTINGS, ...(row || {}) };
+      merged.homepage_content = mergeHomepageContent(merged.homepage_content);
+      setSettings(merged);
+    }).catch((requestError) => setError(requestError.message));
   }, []);
 
-  const set = (k, v) => setSettings((s) => ({ ...s, [k]: v }));
-
-  const setGalleryItem = (i, key, v) =>
-    setSettings((s) => {
-      const list = [...(s.gallery || [])];
-      list[i] = { ...list[i], [key]: v };
-      return { ...s, gallery: list };
+  const set = (key, value) => setSettings((current) => ({ ...current, [key]: value }));
+  const updateHomepage = (update) =>
+    setSettings((current) => ({
+      ...current,
+      homepage_content: update(mergeHomepageContent(current.homepage_content)),
+    }));
+  const setSectionField = (section, key, value) =>
+    updateHomepage((content) => ({ ...content, [section]: { ...content[section], [key]: value } }));
+  const setListItem = (section, listKey, index, key, value) =>
+    updateHomepage((content) => {
+      const owner = section ? content[section] : content;
+      const list = [...owner[listKey]];
+      list[index] = { ...list[index], [key]: value };
+      return section
+        ? { ...content, [section]: { ...owner, [listKey]: list } }
+        : { ...content, [listKey]: list };
     });
-  const addGalleryItem = () =>
-    setSettings((s) => ({ ...s, gallery: [...(s.gallery || []), { src: "", alt: "", tag: "" }] }));
-  const removeGalleryItem = (i) =>
-    setSettings((s) => ({ ...s, gallery: (s.gallery || []).filter((_, idx) => idx !== i) }));
+  const addListItem = (section, listKey) =>
+    updateHomepage((content) => {
+      const owner = section ? content[section] : content;
+      const list = [...owner[listKey], { title: "", text: "" }];
+      return section
+        ? { ...content, [section]: { ...owner, [listKey]: list } }
+        : { ...content, [listKey]: list };
+    });
+  const removeListItem = (section, listKey, index) =>
+    updateHomepage((content) => {
+      const owner = section ? content[section] : content;
+      const list = owner[listKey].filter((_, itemIndex) => itemIndex !== index);
+      return section
+        ? { ...content, [section]: { ...owner, [listKey]: list } }
+        : { ...content, [listKey]: list };
+    });
 
   const save = async () => {
     setBusy(true);
+    setError("");
     try {
       const payload = { ...settings };
-      BUILTINS.forEach((k) => delete payload[k]);
-      await api.settings.save(payload);
+      BUILTINS.forEach((key) => delete payload[key]);
+      const row = await api.settings.save(payload);
+      setSettings({ ...DEFAULT_SETTINGS, ...row, homepage_content: mergeHomepageContent(row.homepage_content) });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
+    } catch (requestError) {
+      setError(requestError.message);
     } finally {
       setBusy(false);
     }
@@ -50,244 +74,133 @@ export default function SettingsPanel() {
   const onUpload = async (file, field) => {
     if (!file) return;
     setUploadingField(field);
+    setError("");
     try {
-      const { file_url } = await api.upload(file);
-      set(field, file_url);
+      const { file_url: fileUrl } = await api.upload(file);
+      set(field, fileUrl);
+    } catch (requestError) {
+      setError(requestError.message);
     } finally {
       setUploadingField("");
     }
   };
 
-  if (!settings) return <Loading />;
+  if (!settings) return error ? <Notice tone="error">{error}</Notice> : <Loading />;
+
+  const content = mergeHomepageContent(settings.homepage_content);
 
   return (
-    <div className="max-w-3xl space-y-10">
-      {saved && (
-        <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 px-4 py-3 font-mono text-xs uppercase tracking-wider">
-          <Check className="w-4 h-4" /> Nastavení uloženo
-        </div>
-      )}
+    <div className="max-w-4xl space-y-8">
+      {saved ? <Notice><Check className="h-4 w-4" /> Obsah homepage byl uložen</Notice> : null}
+      {error ? <Notice tone="error">{error}</Notice> : null}
 
-      <Section title="Značka & logo">
-        <Field label="Logo (obrázek — volitelné, nahradí ikonu)">
-          <Uploader
-            value={settings.logo_url}
-            field="logo_url"
-            uploading={uploadingField === "logo_url"}
-            onUpload={onUpload}
-            set={set}
-          />
+      <div className="border border-amber/25 bg-amber/5 px-5 py-4 text-sm leading-relaxed text-steel">
+        Změny se po uložení projeví přímo v serverově renderované homepage. Jednotlivé bloky upravujte v pořadí, v jakém se zobrazují na webu.
+      </div>
+
+      <Section title="Značka a navigace" description="Logo, název firmy a texty hlavního menu.">
+        <Field label="Logo (volitelné)">
+          <Uploader value={settings.logo_url} field="logo_url" uploading={uploadingField === "logo_url"} onUpload={onUpload} set={set} />
         </Field>
-        <div className="grid sm:grid-cols-3 gap-5">
-          <Field label="Název značky">
-            <input value={settings.brand_name} onChange={(e) => set("brand_name", e.target.value)} className={inputCls} />
-          </Field>
-          <Field label="Přípona (zvýrazněná)">
-            <input value={settings.brand_suffix} onChange={(e) => set("brand_suffix", e.target.value)} className={inputCls} />
-          </Field>
-          <Field label="Slogan">
-            <input value={settings.brand_tagline} onChange={(e) => set("brand_tagline", e.target.value)} className={inputCls} />
-          </Field>
+        <div className="grid gap-5 sm:grid-cols-3">
+          <TextField label="Název značky" value={settings.brand_name} onChange={(value) => set("brand_name", value)} />
+          <TextField label="Přípona" value={settings.brand_suffix} onChange={(value) => set("brand_suffix", value)} />
+          <TextField label="Slogan pod logem" value={settings.brand_tagline} onChange={(value) => set("brand_tagline", value)} />
+          <TextField label="Menu: služby" value={content.navigation.services} onChange={(value) => setSectionField("navigation", "services", value)} />
+          <TextField label="Menu: postup" value={content.navigation.process} onChange={(value) => setSectionField("navigation", "process", value)} />
+          <TextField label="Menu: kontakt" value={content.navigation.contact} onChange={(value) => setSectionField("navigation", "contact", value)} />
         </div>
       </Section>
 
-      <Section title="Kontakt">
-        <div className="grid sm:grid-cols-2 gap-5">
-          <Field label="Telefon (zobrazený)">
-            <input value={settings.phone} onChange={(e) => set("phone", e.target.value)} className={inputCls} />
-          </Field>
-          <Field label="Telefon (odkaz tel:)">
-            <input value={settings.phone_href} onChange={(e) => set("phone_href", e.target.value)} className={inputClsMono} />
-          </Field>
-          <Field label="E-mail">
-            <input value={settings.email} onChange={(e) => set("email", e.target.value)} className={inputCls} />
-          </Field>
-          <Field label="IČO">
-            <input value={settings.ic} onChange={(e) => set("ic", e.target.value)} className={inputCls} />
-          </Field>
-          <Field label="Majitel / kontakt">
-            <input value={settings.owner_name} onChange={(e) => set("owner_name", e.target.value)} className={inputCls} />
-          </Field>
-          <Field label="Adresa">
-            <input value={settings.address} onChange={(e) => set("address", e.target.value)} className={inputCls} />
-          </Field>
-        </div>
-      </Section>
-
-      <Section title="Hero — hlavní banner">
+      <Section title="Hero – hlavní banner" description="První obrazovka webu včetně hlavních tlačítek.">
         <Field label="Obrázek pozadí">
-          <Uploader
-            value={settings.hero_image_url}
-            field="hero_image_url"
-            uploading={uploadingField === "hero_image_url"}
-            onUpload={onUpload}
-            set={set}
-          />
+          <Uploader value={settings.hero_image_url} field="hero_image_url" uploading={uploadingField === "hero_image_url"} onUpload={onUpload} set={set} />
         </Field>
-        <Field label="Nadpis sekce (č. řádek)">
-          <input value={settings.hero_eyebrow} onChange={(e) => set("hero_eyebrow", e.target.value)} className={inputCls} />
-        </Field>
-        <Field label="Titulek">
-          <textarea rows={2} value={settings.hero_title} onChange={(e) => set("hero_title", e.target.value)} className={inputCls} />
-        </Field>
-        <Field label="Odstavec">
-          <textarea rows={3} value={settings.hero_paragraph} onChange={(e) => set("hero_paragraph", e.target.value)} className={inputCls} />
-        </Field>
-        <div className="grid sm:grid-cols-2 gap-5">
-          <Field label="Tlačítko 1">
-            <input value={settings.hero_cta_primary} onChange={(e) => set("hero_cta_primary", e.target.value)} className={inputCls} />
-          </Field>
-          <Field label="Tlačítko 2">
-            <input value={settings.hero_cta_secondary} onChange={(e) => set("hero_cta_secondary", e.target.value)} className={inputCls} />
-          </Field>
+        <TextField label="Štítek nad nadpisem" value={settings.hero_eyebrow} onChange={(value) => set("hero_eyebrow", value)} />
+        <TextArea label="Hlavní nadpis" rows={2} value={settings.hero_title} onChange={(value) => set("hero_title", value)} />
+        <TextArea label="Úvodní text" rows={4} value={settings.hero_paragraph} onChange={(value) => set("hero_paragraph", value)} />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <TextField label="Hlavní tlačítko" value={settings.hero_cta_primary} onChange={(value) => set("hero_cta_primary", value)} />
+          <TextField label="E-mailové tlačítko" value={settings.hero_cta_secondary} onChange={(value) => set("hero_cta_secondary", value)} />
         </div>
       </Section>
 
-      <Section title="Statistiky (4 údaje v hero)">
-        <div className="grid sm:grid-cols-2 gap-5">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="grid grid-cols-2 gap-3">
-              <Field label={`Hodnota ${i}`}>
-                <input
-                  value={settings[`stat${i}_value`]}
-                  onChange={(e) => set(`stat${i}_value`, e.target.value)}
-                  className={inputCls}
-                />
-              </Field>
-              <Field label={`Popisek ${i}`}>
-                <input
-                  value={settings[`stat${i}_label`]}
-                  onChange={(e) => set(`stat${i}_label`, e.target.value)}
-                  className={inputCls}
-                />
-              </Field>
-            </div>
-          ))}
+      <Section title="Výhody v hero" description="Tři stručné argumenty pod úvodním textem.">
+        <EditableList
+          items={content.highlights}
+          limit={3}
+          itemLabel="Výhoda"
+          onChange={(index, key, value) => setListItem(null, "highlights", index, key, value)}
+          onAdd={() => addListItem(null, "highlights")}
+          onRemove={(index) => removeListItem(null, "highlights", index)}
+        />
+      </Section>
+
+      <Section title="Služby" description="Nadpis sekce a karty specializací. Lze přidat až osm položek.">
+        <TextField label="Malý nadpis" value={content.services.eyebrow} onChange={(value) => setSectionField("services", "eyebrow", value)} />
+        <TextArea label="Hlavní nadpis" rows={2} value={content.services.title} onChange={(value) => setSectionField("services", "title", value)} />
+        <TextArea label="Úvodní odstavec" rows={3} value={content.services.intro} onChange={(value) => setSectionField("services", "intro", value)} />
+        <EditableList
+          items={content.services.items}
+          limit={8}
+          itemLabel="Služba"
+          onChange={(index, key, value) => setListItem("services", "items", index, key, value)}
+          onAdd={() => addListItem("services", "items")}
+          onRemove={(index) => removeListItem("services", "items", index)}
+        />
+      </Section>
+
+      <Section title="Postup realizace" description="Kroky od prvního zadání až po dokončení přepravy.">
+        <TextField label="Malý nadpis" value={content.process.eyebrow} onChange={(value) => setSectionField("process", "eyebrow", value)} />
+        <TextArea label="Hlavní nadpis" rows={2} value={content.process.title} onChange={(value) => setSectionField("process", "title", value)} />
+        <EditableList
+          items={content.process.steps}
+          limit={8}
+          itemLabel="Krok"
+          onChange={(index, key, value) => setListItem("process", "steps", index, key, value)}
+          onAdd={() => addListItem("process", "steps")}
+          onRemove={(index) => removeListItem("process", "steps", index)}
+        />
+      </Section>
+
+      <Section title="Kontaktní výzva" description="Závěrečný blok homepage a firemní údaje.">
+        <TextField label="Malý nadpis" value={content.contact.eyebrow} onChange={(value) => setSectionField("contact", "eyebrow", value)} />
+        <TextArea label="Hlavní nadpis" rows={2} value={content.contact.title} onChange={(value) => setSectionField("contact", "title", value)} />
+        <TextField label="Popisek kontaktu" value={content.contact.directLabel} onChange={(value) => setSectionField("contact", "directLabel", value)} />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <TextField label="Telefon" value={settings.phone} onChange={(value) => set("phone", value)} />
+          <TextField label="Telefonní odkaz" value={settings.phone_href} mono onChange={(value) => set("phone_href", value)} />
+          <TextField label="E-mail" type="email" value={settings.email} onChange={(value) => set("email", value)} />
+          <TextField label="Majitel / kontakt" value={settings.owner_name} onChange={(value) => set("owner_name", value)} />
+          <TextField label="Adresa" value={settings.address} onChange={(value) => set("address", value)} />
+          <TextField label="IČO" value={settings.ic} onChange={(value) => set("ic", value)} />
         </div>
       </Section>
 
-      <Section title="Sekce O nás">
-        <Field label="Obrázek">
-          <Uploader
-            value={settings.about_image_url}
-            field="about_image_url"
-            uploading={uploadingField === "about_image_url"}
-            onUpload={onUpload}
-            set={set}
-          />
-        </Field>
-        <Field label="Nadpis sekce">
-          <input value={settings.about_eyebrow} onChange={(e) => set("about_eyebrow", e.target.value)} className={inputCls} />
-        </Field>
-        <Field label="Titulek">
-          <textarea rows={2} value={settings.about_title} onChange={(e) => set("about_title", e.target.value)} className={inputCls} />
-        </Field>
-        <Field label="Odstavec 1">
-          <textarea rows={3} value={settings.about_paragraph_1} onChange={(e) => set("about_paragraph_1", e.target.value)} className={inputCls} />
-        </Field>
-        <Field label="Odstavec 2">
-          <textarea rows={3} value={settings.about_paragraph_2} onChange={(e) => set("about_paragraph_2", e.target.value)} className={inputCls} />
-        </Field>
+      <Section title="Patička">
+        <TextField label="Text uprostřed patičky" value={content.footer.text} onChange={(value) => setSectionField("footer", "text", value)} />
       </Section>
 
-      <Section title="Mapa (sídlo)">
-        <div className="grid sm:grid-cols-2 gap-5">
-          <Field label="Zeměpisná šířka">
-            <input
-              type="number"
-              step="0.0001"
-              value={settings.map_lat}
-              onChange={(e) => set("map_lat", Number(e.target.value))}
-              className={inputClsMono}
-            />
-          </Field>
-          <Field label="Zeměpisná délka">
-            <input
-              type="number"
-              step="0.0001"
-              value={settings.map_lng}
-              onChange={(e) => set("map_lng", Number(e.target.value))}
-              className={inputClsMono}
-            />
-          </Field>
-        </div>
-      </Section>
-
-      <Section title="Fotogalerie (úvodní stránka)">
-        <p className="text-steel-dim text-sm mb-5">
-          Určete, které fotografie se zobrazí v sekci Fotogalerie. Prázdné pole = použijí se výchozí fotky.
-        </p>
-        <div className="space-y-4">
-          {(settings.gallery || []).map((g, i) => (
-            <div key={i} className="grid sm:grid-cols-[1fr_180px_auto] gap-3 items-start border border-white/10 p-3 bg-asphalt-2">
-              <div className="space-y-2">
-                <Uploader
-                  value={g.src}
-                  field={`gallery-${i}-src`}
-                  uploading={uploadingField === `gallery-${i}-src`}
-                  onUpload={async (file, f) => {
-                    setUploadingField(f);
-                    try {
-                      const { file_url } = await api.upload(file);
-                      setGalleryItem(i, "src", file_url);
-                    } finally {
-                      setUploadingField("");
-                    }
-                  }}
-                  set={(f, v) => setGalleryItem(i, "src", v)}
-                />
-                <input
-                  value={g.alt || ""}
-                  onChange={(e) => setGalleryItem(i, "alt", e.target.value)}
-                  className={inputCls}
-                  placeholder="Popisek (alt)"
-                />
-              </div>
-              <input
-                value={g.tag || ""}
-                onChange={(e) => setGalleryItem(i, "tag", e.target.value)}
-                className={`${inputCls} uppercase`}
-                placeholder="Štítek"
-              />
-              <button
-                onClick={() => removeGalleryItem(i)}
-                className="border border-white/15 text-steel hover:text-red-400 hover:border-red-400/40 px-3 py-3 flex items-center justify-center"
-                aria-label="Smazat fotku"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-          <button
-            onClick={addGalleryItem}
-            className="border border-dashed border-white/20 text-steel hover:text-amber hover:border-amber/40 px-4 py-3 flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-wider w-full"
-          >
-            <Plus className="w-4 h-4" /> Přidat fotku
-          </button>
-        </div>
-      </Section>
-
-      <div className="flex items-center gap-3 pt-2">
-        <button
-          onClick={save}
-          disabled={busy}
-          className="btn-industrial bg-amber text-asphalt font-display font-bold uppercase tracking-wider px-6 py-3 flex items-center gap-2 disabled:opacity-50"
-        >
-          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Uložit nastavení
+      <div className="sticky bottom-4 z-20 flex justify-end border border-white/10 bg-asphalt/95 p-4 shadow-2xl backdrop-blur">
+        <button type="button" onClick={save} disabled={busy} className="btn-industrial flex items-center gap-2 bg-amber px-6 py-3 font-display font-bold uppercase tracking-wider text-asphalt disabled:opacity-50">
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          Uložit homepage
         </button>
       </div>
     </div>
   );
 }
 
-const inputCls = "w-full bg-asphalt-2 border border-white/15 px-4 py-3 text-brown";
-const inputClsMono = "w-full bg-asphalt-2 border border-white/15 px-4 py-3 text-brown font-mono text-sm";
+const inputCls = "w-full border border-white/15 bg-asphalt-2 px-4 py-3 text-brown outline-none transition-colors focus:border-amber/70";
+const inputClsMono = `${inputCls} font-mono text-sm`;
 
-function Section({ title, children }) {
+function Section({ title, description, children }) {
   return (
-    <section className="bg-asphalt border border-white/10 p-6">
-      <h3 className="font-display font-bold text-brown text-lg mb-5">{title}</h3>
+    <section className="border border-white/10 bg-asphalt p-6">
+      <div className="mb-5 border-b border-white/10 pb-4">
+        <h3 className="font-display text-lg font-bold text-brown">{title}</h3>
+        {description ? <p className="mt-1 text-sm text-steel-dim">{description}</p> : null}
+      </div>
       <div className="space-y-5">{children}</div>
     </section>
   );
@@ -296,8 +209,45 @@ function Section({ title, children }) {
 function Field({ label, children }) {
   return (
     <div>
-      <label className="font-mono text-xs uppercase tracking-wider text-steel mb-2 block">{label}</label>
+      <label className="mb-2 block font-mono text-xs uppercase tracking-wider text-steel">{label}</label>
       {children}
+    </div>
+  );
+}
+
+function TextField({ label, value, onChange, mono = false, type = "text" }) {
+  return (
+    <Field label={label}>
+      <input type={type} value={value || ""} onChange={(event) => onChange(event.target.value)} className={mono ? inputClsMono : inputCls} />
+    </Field>
+  );
+}
+
+function TextArea({ label, value, onChange, rows }) {
+  return (
+    <Field label={label}>
+      <textarea rows={rows} value={value || ""} onChange={(event) => onChange(event.target.value)} className={inputCls} />
+    </Field>
+  );
+}
+
+function EditableList({ items, limit, itemLabel, onChange, onAdd, onRemove }) {
+  return (
+    <div className="space-y-3">
+      {items.map((item, index) => (
+        <div key={index} className="grid gap-3 border border-white/10 bg-asphalt-2 p-4 sm:grid-cols-[1fr_1.5fr_auto] sm:items-start">
+          <TextField label={`${itemLabel} ${index + 1} – název`} value={item.title} onChange={(value) => onChange(index, "title", value)} />
+          <TextArea label="Popis" rows={2} value={item.text} onChange={(value) => onChange(index, "text", value)} />
+          <button type="button" onClick={() => onRemove(index)} className="mt-6 flex h-11 w-11 items-center justify-center border border-white/15 text-steel transition-colors hover:border-red-400/40 hover:text-red-400" aria-label={`Smazat položku ${index + 1}`}>
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      ))}
+      {items.length < limit ? (
+        <button type="button" onClick={onAdd} className="flex w-full items-center justify-center gap-2 border border-dashed border-white/20 px-4 py-3 font-mono text-xs uppercase tracking-wider text-steel transition-colors hover:border-amber/40 hover:text-amber">
+          <Plus className="h-4 w-4" /> Přidat položku
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -305,37 +255,24 @@ function Field({ label, children }) {
 function Uploader({ value, field, uploading, onUpload, set }) {
   return (
     <div>
-      <div className="flex items-center gap-3">
-        <input
-          value={value || ""}
-          onChange={(e) => set(field, e.target.value)}
-          className="flex-1 bg-asphalt-2 border border-white/15 px-4 py-3 text-brown font-mono text-xs"
-          placeholder="https://..."
-        />
-        <label className="btn-industrial border border-white/20 text-brown font-display font-bold text-xs uppercase tracking-wider px-4 py-3 flex items-center gap-1.5 cursor-pointer">
-          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <input value={value || ""} onChange={(event) => set(field, event.target.value)} className={`${inputClsMono} flex-1`} placeholder="/images/... nebo https://..." />
+        <label className="btn-industrial flex cursor-pointer items-center justify-center gap-1.5 border border-white/20 px-4 py-3 font-display text-xs font-bold uppercase tracking-wider text-brown">
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
           Nahrát
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => onUpload(e.target.files?.[0], field)}
-          />
+          <input type="file" accept="image/*" className="hidden" onChange={(event) => onUpload(event.target.files?.[0], field)} />
         </label>
       </div>
-      {value && (
-        <div className="mt-3 aspect-[3/1] w-full max-w-xs overflow-hidden border border-white/10">
-          <img src={value} alt="" className="w-full h-full object-contain bg-asphalt-2" />
-        </div>
-      )}
+      {value ? <div className="mt-3 aspect-[3/1] w-full max-w-md overflow-hidden border border-white/10"><img src={value} alt="" className="h-full w-full bg-asphalt-2 object-cover" /></div> : null}
     </div>
   );
 }
 
+function Notice({ children, tone = "success" }) {
+  const classes = tone === "error" ? "border-red-500/30 bg-red-500/10 text-red-300" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300";
+  return <div className={`flex items-center gap-2 border px-4 py-3 font-mono text-xs uppercase tracking-wider ${classes}`}>{children}</div>;
+}
+
 function Loading() {
-  return (
-    <div className="flex justify-center py-20">
-      <Loader2 className="w-8 h-8 text-amber animate-spin" />
-    </div>
-  );
+  return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-amber" /></div>;
 }

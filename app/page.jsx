@@ -2,6 +2,7 @@ import Home from "@/screens/Home";
 import { absoluteUrl, DEFAULT_SOCIAL_IMAGE, publicMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo";
 import { prisma } from "@/lib/server/prisma";
 import { serializeSettings } from "@/lib/server/serializers";
+import { DEFAULT_SETTINGS, mergeHomepageContent } from "@/lib/site-settings-defaults";
 
 export const dynamic = "force-dynamic";
 
@@ -21,23 +22,25 @@ export default async function Page() {
     // Server defaults keep the complete page renderable during a temporary DB outage.
   }
 
+  const resolvedSettings = { ...DEFAULT_SETTINGS, ...settings };
+  const homepageContent = mergeHomepageContent(resolvedSettings.homepage_content);
+  const brand = `${resolvedSettings.brand_name}${resolvedSettings.brand_suffix}`;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": ["Organization", "LocalBusiness"],
         "@id": `${absoluteUrl("/")}#business`,
-        name: SITE_NAME,
+        name: brand,
         url: absoluteUrl("/"),
         image: absoluteUrl(DEFAULT_SOCIAL_IMAGE),
-        telephone: "+420732530802",
-        email: "info@dopravaci.cz",
-        identifier: { "@type": "PropertyValue", propertyID: "IČO", value: "76651282" },
+        telephone: resolvedSettings.phone,
+        email: resolvedSettings.email,
+        identifier: { "@type": "PropertyValue", propertyID: "IČO", value: resolvedSettings.ic },
         address: {
           "@type": "PostalAddress",
-          streetAddress: "Jiránkova 1137/1",
-          postalCode: "163 00",
-          addressLocality: "Praha-Řepy",
+          streetAddress: resolvedSettings.address,
           addressCountry: "CZ",
         },
         areaServed: ["Česká republika", "Evropa"],
@@ -56,12 +59,7 @@ export default async function Page() {
         name: "Nadrozměrná a velkotonážní přeprava",
         provider: { "@id": `${absoluteUrl("/")}#business` },
         areaServed: ["Česká republika", "Evropa"],
-        serviceType: [
-          "Přeprava lopatek větrných elektráren",
-          "Přeprava rour a potrubních dílů",
-          "Přeprava velkotonážních nákladů",
-          "Asistovaná přeprava",
-        ],
+        serviceType: homepageContent.services.items.map((service) => service.title),
       },
     ],
   };
@@ -72,7 +70,7 @@ export default async function Page() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <Home settings={settings} />
+      <Home settings={resolvedSettings} />
     </>
   );
 }

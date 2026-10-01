@@ -12,13 +12,51 @@ const FIELD_MAP = {
   stat3_value: "stat3Value", stat3_label: "stat3Label", stat4_value: "stat4Value", stat4_label: "stat4Label",
   about_eyebrow: "aboutEyebrow", about_title: "aboutTitle", about_paragraph_1: "aboutParagraph1",
   about_paragraph_2: "aboutParagraph2", about_image_url: "aboutImageUrl", map_lat: "mapLat", map_lng: "mapLng", gallery: "gallery",
+  homepage_content: "homepageContent",
 };
+
+const cleanText = (value, length = 2000) => (typeof value === "string" ? value.slice(0, length) : "");
+const cleanItems = (value, limit) =>
+  (Array.isArray(value) ? value : []).slice(0, limit).map((item) => ({
+    title: cleanText(item?.title, 300),
+    text: cleanText(item?.text, 3000),
+  }));
+
+function cleanHomepageContent(value) {
+  const content = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  return {
+    navigation: {
+      services: cleanText(content.navigation?.services, 80),
+      process: cleanText(content.navigation?.process, 80),
+      contact: cleanText(content.navigation?.contact, 80),
+    },
+    highlights: cleanItems(content.highlights, 3),
+    services: {
+      eyebrow: cleanText(content.services?.eyebrow, 200),
+      title: cleanText(content.services?.title, 500),
+      intro: cleanText(content.services?.intro, 3000),
+      items: cleanItems(content.services?.items, 8),
+    },
+    process: {
+      eyebrow: cleanText(content.process?.eyebrow, 200),
+      title: cleanText(content.process?.title, 500),
+      steps: cleanItems(content.process?.steps, 8),
+    },
+    contact: {
+      eyebrow: cleanText(content.contact?.eyebrow, 200),
+      title: cleanText(content.contact?.title, 500),
+      directLabel: cleanText(content.contact?.directLabel, 200),
+    },
+    footer: { text: cleanText(content.footer?.text, 500) },
+  };
+}
 
 function settingsData(body) {
   const data = {};
   for (const [input, field] of Object.entries(FIELD_MAP)) {
     if (!(input in (body || {}))) continue;
     if (input === "gallery") data[field] = Array.isArray(body[input]) ? body[input].slice(0, 100) : [];
+    else if (input === "homepage_content") data[field] = cleanHomepageContent(body[input]);
     else if (input === "map_lat" || input === "map_lng") data[field] = Number.isFinite(Number(body[input])) ? Number(body[input]) : null;
     else data[field] = typeof body[input] === "string" ? body[input].slice(0, 20000) || null : null;
   }

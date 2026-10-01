@@ -51,7 +51,7 @@ export default function Admin() {
               <TabButton active={tab === "inquiries"} onClick={() => setTab("inquiries")} icon={ClipboardList} label="Poptávky" />
               <TabButton active={tab === "approvals"} onClick={() => setTab("approvals")} icon={UserCheck} label="Registrace" />
               <TabButton active={tab === "articles"} onClick={() => setTab("articles")} icon={Newspaper} label="Články" />
-              <TabButton active={tab === "settings"} onClick={() => setTab("settings")} icon={Settings} label="Nastavení webu" />
+              <TabButton active={tab === "settings"} onClick={() => setTab("settings")} icon={Settings} label="Obsah homepage" />
             </div>
             {tab === "inquiries" ? (
               <InquiriesPanel />
