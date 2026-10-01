@@ -1,5 +1,3 @@
-"use client";
-
 import {
   ArrowRight,
   Factory,
@@ -13,7 +11,7 @@ import {
   Weight,
   Wind,
 } from "lucide-react";
-import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { DEFAULT_SETTINGS } from "@/lib/site-settings-defaults";
 
 const services = [
   {
@@ -48,8 +46,8 @@ const steps = [
   { title: "Koordinovaná realizace", text: "Přeprava s průběžnou komunikací a dohledem nad bezpečným průběhem zakázky." },
 ];
 
-export default function Home() {
-  const s = useSiteSettings();
+export default function Home({ settings = null }) {
+  const s = { ...DEFAULT_SETTINGS, ...settings };
   const brand = `${s.brand_name}${s.brand_suffix}`;
 
   return (
