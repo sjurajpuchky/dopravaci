@@ -2,7 +2,7 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import ClanekDetail from "@/screens/ClanekDetail";
 import { prisma } from "@/lib/server/prisma";
-import { serializeArticle } from "@/lib/server/serializers";
+import { serializeArticle, serializeSettings } from "@/lib/server/serializers";
 import { absoluteUrl, publicMetadata, SITE_NAME } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }) {
   } catch {
     return publicMetadata({
       title: "Článek",
-      description: "Články a rady Dopravaci.cz ke stěhování a přepravě.",
+      description: "Články a odborné informace Dopravaci.cz k dopravě a přepravě.",
       path: `/clanky/${slug}`,
     });
   }
@@ -56,8 +56,14 @@ export async function generateMetadata({ params }) {
 export default async function Page({ params }) {
   const { slug } = await params;
   let article;
+  let settings = null;
   try {
-    article = await getArticle(slug);
+    const [resolvedArticle, settingsRow] = await Promise.all([
+      getArticle(slug),
+      prisma.siteSettings.findFirst({ orderBy: { updatedAt: "desc" } }),
+    ]);
+    article = resolvedArticle;
+    settings = settingsRow ? serializeSettings(settingsRow) : null;
   } catch {
     article = null;
   }
@@ -96,7 +102,7 @@ export default async function Page({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd).replace(/</g, "\\u003c") }}
       />
-      <ClanekDetail initialItem={article} />
+      <ClanekDetail item={article} settings={settings} />
     </>
   );
 }

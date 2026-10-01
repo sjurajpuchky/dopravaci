@@ -168,7 +168,10 @@ export default function Home({ settings = null }) {
       <footer className="bg-[#0b1218] text-white/55">
         <div className="mx-auto flex max-w-[1500px] flex-col gap-4 px-5 py-7 text-sm md:flex-row md:items-center md:justify-between md:px-10">
           <div className="font-bold text-white">{brand}</div>
-          <div>{content.footer.text}</div>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <span>{content.footer.text}</span>
+            <a href="/clanky" className="font-bold text-white transition-colors hover:text-[#f5a623]">Články</a>
+          </div>
           <div>© {new Date().getFullYear()} Všechna práva vyhrazena</div>
         </div>
       </footer>

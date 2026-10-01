@@ -1,29 +1,41 @@
 import ClankyPage from "@/screens/ClankyPage";
 import { prisma } from "@/lib/server/prisma";
-import { serializeArticle } from "@/lib/server/serializers";
+import { serializeArticle, serializeSettings } from "@/lib/server/serializers";
 import { absoluteUrl, publicMetadata, SITE_NAME } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = publicMetadata({
-  title: "Články a rady pro stěhování",
+  title: "Články o dopravě a přepravě",
   description:
-    "Praktické rady ke stěhování, rozvozu nábytku, vyklízení a bezpečné přepravě těžkých či nestandardních předmětů.",
+    "Praktické informace o dopravě, plánování tras, manipulaci a bezpečné přepravě těžkých či nestandardních předmětů.",
   path: "/clanky",
 });
 
-export default async function Page() {
+const PAGE_SIZE = 24;
+
+export default async function Page({ searchParams }) {
   let articles = [];
+  let settings = null;
+  let currentPage = Math.max(1, Number.parseInt((await searchParams)?.page || "1", 10) || 1);
+  let totalPages = 1;
   try {
+    const [count, settingsRow] = await Promise.all([
+      prisma.article.count({ where: { published: true } }),
+      prisma.siteSettings.findFirst({ orderBy: { updatedAt: "desc" } }),
+    ]);
+    totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
+    currentPage = Math.min(currentPage, totalPages);
     const rows = await prisma.article.findMany({
       where: { published: true },
       orderBy: { createdAt: "desc" },
-      take: 500,
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
     });
     articles = rows.map(serializeArticle);
+    settings = settingsRow ? serializeSettings(settingsRow) : null;
   } catch {
-    // The client retries through the public API if the database is temporarily unavailable.
-    articles = null;
+    // The page remains server-renderable with an empty state and default branding.
   }
 
   const jsonLd = {
@@ -31,8 +43,8 @@ export default async function Page() {
     "@graph": [
       {
         "@type": "CollectionPage",
-        name: "Články a rady pro stěhování",
-        description: "Praktické rady ke stěhování, rozvozu nábytku a nestandardní přepravě.",
+        name: "Články o dopravě a přepravě",
+        description: "Praktické informace o dopravě, manipulaci s náklady a nestandardní přepravě.",
         url: absoluteUrl("/clanky"),
         isPartOf: { "@type": "WebSite", name: SITE_NAME, url: absoluteUrl("/") },
       },
@@ -52,7 +64,7 @@ export default async function Page() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <ClankyPage initialItems={articles} />
+      <ClankyPage items={articles} currentPage={currentPage} totalPages={totalPages} settings={settings} />
     </>
   );
 }

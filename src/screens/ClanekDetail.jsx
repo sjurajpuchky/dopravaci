@@ -1,121 +1,68 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
-import { api } from "@/api/client";
-import { Image } from "@/components/ui/image";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/sections/Footer";
+import { ArrowLeft, CalendarDays, UserRound } from "lucide-react";
+import { ArticleFooter, ArticleHeader } from "@/components/public/ArticleShell";
 
-export default function ClanekDetail({ initialItem = null }) {
-  const { slug } = useParams();
-  const [item, setItem] = useState(initialItem);
-  const [notFound, setNotFound] = useState(false);
-
-  useEffect(() => {
-    if (initialItem?.slug === slug) return;
-    setItem(null);
-    setNotFound(false);
-    api.articles
-      .bySlug(slug)
-      .then(setItem)
-      .catch(() => setNotFound(true));
-  }, [initialItem, slug]);
-
+export default function ClanekDetail({ item, settings = null }) {
   return (
-    <div className="bg-sand min-h-screen text-brown">
-      <Navbar />
+    <div className="transport-site min-h-screen bg-[#eef1f3] text-[#101820]">
+      <ArticleHeader settings={settings} />
 
-      <article className="pt-28 md:pt-36 pb-20">
-        {notFound ? (
-          <div className="max-w-2xl mx-auto px-5 text-center">
-            <h1 className="display-mega text-brown text-4xl mb-4">Článek nenalezen</h1>
-            <p className="text-brown-soft mb-8">Tento článek neexistuje nebo nebyl publikován.</p>
-            <Link href="/" className="btn-warm inline-flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" /> Zpět na úvod
-            </Link>
-          </div>
-        ) : !item ? (
-          <div className="flex justify-center py-32">
-            <Loader2 className="w-8 h-8 text-terracotta animate-spin" />
-          </div>
-        ) : (
-          <div className="max-w-3xl mx-auto px-5 md:px-10">
-            <Link
-              href="/clanky"
-              className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-brown-soft hover:text-terracotta mb-8 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" /> Zpět na články
-            </Link>
-
-            {item.tag && (
-              <div className="text-terracotta font-mono text-xs uppercase tracking-[0.14em] mb-4">
-                {item.tag}
+      <main>
+        <article>
+          <header className="bg-[#101820] py-16 text-white md:py-24">
+            <div className="mx-auto max-w-5xl px-5 md:px-10">
+              <Link href="/clanky" className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.14em] text-white/55 transition-colors hover:text-[#f5a623]">
+                <ArrowLeft className="h-4 w-4" /> Zpět na články
+              </Link>
+              {item.tag ? <div className="transport-kicker mt-10 text-[#f5a623]">{item.tag}</div> : null}
+              <h1 className="mt-4 max-w-4xl text-balance text-4xl font-black leading-[1.02] tracking-[-0.05em] md:text-7xl">{item.title}</h1>
+              {item.excerpt ? <p className="mt-6 max-w-3xl text-lg leading-relaxed text-white/65 md:text-xl">{item.excerpt}</p> : null}
+              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 font-mono text-xs uppercase tracking-wider text-white/50">
+                {item.author_name ? <span className="inline-flex items-center gap-2"><UserRound className="h-4 w-4 text-[#f5a623]" /> {item.author_name}</span> : null}
+                {item.created_date ? <time dateTime={new Date(item.created_date).toISOString()} className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[#f5a623]" /> {formatDate(item.created_date)}</time> : null}
               </div>
-            )}
-            <h1 className="display-mega text-brown text-4xl md:text-5xl text-balance mb-4">
-              {item.title}
-            </h1>
-            <div className="flex items-center gap-3 font-mono text-xs text-brown-soft uppercase tracking-wider mb-8">
-              {item.author_name && <span>{item.author_name}</span>}
-              {item.created_date && (
-                <span>{new Date(item.created_date).toLocaleDateString("cs-CZ")}</span>
-              )}
             </div>
+          </header>
 
-            {item.image_url && (
-              <div className="aspect-[16/9] overflow-hidden rounded-[24px] border border-[rgba(107,79,58,0.15)] mb-10">
-                <Image src={item.image_url} alt={item.title} fittingType="fill" className="w-full h-full" />
+          <div className="mx-auto max-w-5xl px-5 py-12 md:px-10 md:py-20">
+            {item.image_url ? (
+              <div className="mb-12 aspect-[16/9] overflow-hidden bg-[#dfe4e7]">
+                <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" />
               </div>
-            )}
+            ) : null}
 
-            {item.excerpt && (
-              <p className="text-brown text-lg leading-relaxed mb-8 font-medium">{item.excerpt}</p>
-            )}
+            <div className="transport-article-content mx-auto max-w-3xl" dangerouslySetInnerHTML={{ __html: item.content || "" }} />
 
-            <div
-              className="article-content"
-              dangerouslySetInnerHTML={{ __html: item.content || "" }}
-            />
-
-            {item.gallery && item.gallery.length > 0 && (
-              <div className="mt-10">
-                <h2 className="font-display font-bold text-brown text-2xl mb-5">Galerie</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {item.gallery.map((url, i) => (
-                    <a
-                      key={i}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="aspect-square overflow-hidden rounded-[16px] border border-[rgba(107,79,58,0.15)] block"
-                    >
-                      <Image src={url} alt={`${item.title} – fotografie ${i + 1}`} fittingType="fill" className="w-full h-full" />
+            {item.gallery?.length ? (
+              <section className="mx-auto mt-14 max-w-4xl border-t border-[#cbd2d7] pt-10">
+                <h2 className="text-3xl font-black tracking-[-0.035em]">Galerie</h2>
+                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {item.gallery.map((url, index) => (
+                    <a key={`${url}-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="aspect-square overflow-hidden bg-[#dfe4e7]">
+                      <img src={url} alt={`${item.title} – fotografie ${index + 1}`} className="h-full w-full object-cover transition-transform hover:scale-[1.03]" loading="lazy" />
                     </a>
                   ))}
                 </div>
-              </div>
-            )}
+              </section>
+            ) : null}
 
-            {item.videos && item.videos.length > 0 && (
-              <div className="mt-10">
-                <h2 className="font-display font-bold text-brown text-2xl mb-5">Videa</h2>
-                <div className="space-y-5">
-                  {item.videos.map((url, i) => (
-                    <div key={i} className="aspect-video overflow-hidden rounded-[20px] border border-[rgba(107,79,58,0.15)] bg-black">
-                      <video src={url} controls className="w-full h-full object-contain" />
-                    </div>
-                  ))}
+            {item.videos?.length ? (
+              <section className="mx-auto mt-14 max-w-4xl border-t border-[#cbd2d7] pt-10">
+                <h2 className="text-3xl font-black tracking-[-0.035em]">Videa</h2>
+                <div className="mt-6 space-y-5">
+                  {item.videos.map((url, index) => <video key={`${url}-${index}`} src={url} controls className="aspect-video w-full bg-black object-contain" />)}
                 </div>
-              </div>
-            )}
+              </section>
+            ) : null}
           </div>
-        )}
-      </article>
+        </article>
+      </main>
 
-      <Footer />
+      <ArticleFooter settings={settings} />
     </div>
   );
+}
+
+function formatDate(value) {
+  return new Intl.DateTimeFormat("cs-CZ", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Prague" }).format(new Date(value));
 }

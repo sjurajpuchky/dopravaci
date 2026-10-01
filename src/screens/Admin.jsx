@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { Truck, LogOut, ClipboardList, UserCheck, Newspaper, Settings } from "lucide-react";
+import { Truck, LogOut, Newspaper, Settings } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
-import InquiriesPanel from "@/components/admin/InquiriesPanel";
-import ApprovalsPanel from "@/components/admin/ApprovalsPanel";
 import ArticlesPanel from "@/components/admin/ArticlesPanel";
 import SettingsPanel from "@/components/admin/SettingsPanel";
 import MyInquiries from "@/components/admin/MyInquiries";
@@ -13,7 +11,7 @@ import MyInquiries from "@/components/admin/MyInquiries";
 export default function Admin() {
   const { user, logout } = useAuth();
   const isAdmin = user?.role === "admin";
-  const [tab, setTab] = useState(isAdmin ? "inquiries" : "mine");
+  const [tab, setTab] = useState(isAdmin ? "articles" : "mine");
 
   return (
     <div className="min-h-screen bg-asphalt-2 text-brown">
@@ -48,16 +46,10 @@ export default function Admin() {
         {isAdmin ? (
           <>
             <div className="flex gap-1 mb-8 border-b border-white/10 overflow-x-auto no-scrollbar">
-              <TabButton active={tab === "inquiries"} onClick={() => setTab("inquiries")} icon={ClipboardList} label="Poptávky" />
-              <TabButton active={tab === "approvals"} onClick={() => setTab("approvals")} icon={UserCheck} label="Registrace" />
               <TabButton active={tab === "articles"} onClick={() => setTab("articles")} icon={Newspaper} label="Články" />
               <TabButton active={tab === "settings"} onClick={() => setTab("settings")} icon={Settings} label="Obsah homepage" />
             </div>
-            {tab === "inquiries" ? (
-              <InquiriesPanel />
-            ) : tab === "approvals" ? (
-              <ApprovalsPanel />
-            ) : tab === "articles" ? (
+            {tab === "articles" ? (
               <ArticlesPanel />
             ) : (
               <SettingsPanel />
