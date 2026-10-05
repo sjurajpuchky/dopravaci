@@ -47,6 +47,13 @@ export const DEFAULT_HOMEPAGE_CONTENT = {
     title: "Máte nestandardní náklad? Proberme trasu.",
     directLabel: "Přímý kontakt",
   },
+  recommendation: {
+    eyebrow: "Stěhování domácností a firem",
+    title: "Hledáte spolehlivé stěhování?",
+    text: "Pro stěhování bytů, rodinných domů, kanceláří a firem doporučujeme specializovaný tým Stehuj.eu.",
+    cta: "Navštívit Stehuj.eu",
+    url: "https://www.stehuj.eu",
+  },
   footer: {
     text: "Nadrozměrná a velkotonážní přeprava",
   },
@@ -68,6 +75,7 @@ export function mergeHomepageContent(value) {
       steps: Array.isArray(content.process?.steps) ? content.process.steps : DEFAULT_HOMEPAGE_CONTENT.process.steps,
     },
     contact: { ...DEFAULT_HOMEPAGE_CONTENT.contact, ...(content.contact || {}) },
+    recommendation: { ...DEFAULT_HOMEPAGE_CONTENT.recommendation, ...(content.recommendation || {}) },
     footer: { ...DEFAULT_HOMEPAGE_CONTENT.footer, ...(content.footer || {}) },
   };
 }

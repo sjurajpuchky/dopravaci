@@ -47,6 +47,13 @@ function cleanHomepageContent(value) {
       title: cleanText(content.contact?.title, 500),
       directLabel: cleanText(content.contact?.directLabel, 200),
     },
+    recommendation: {
+      eyebrow: cleanText(content.recommendation?.eyebrow, 200),
+      title: cleanText(content.recommendation?.title, 500),
+      text: cleanText(content.recommendation?.text, 3000),
+      cta: cleanText(content.recommendation?.cta, 200),
+      url: cleanText(content.recommendation?.url, 2000),
+    },
     footer: { text: cleanText(content.footer?.text, 500) },
   };
 }

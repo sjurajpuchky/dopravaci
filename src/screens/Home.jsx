@@ -1,5 +1,7 @@
 import {
   ArrowRight,
+  Building2,
+  ExternalLink,
   Factory,
   Mail,
   MapPin,
@@ -11,15 +13,25 @@ import {
   Weight,
   Wind,
 } from "lucide-react";
-import { DEFAULT_SETTINGS, mergeHomepageContent } from "@/lib/site-settings-defaults";
+import { DEFAULT_HOMEPAGE_CONTENT, DEFAULT_SETTINGS, mergeHomepageContent } from "@/lib/site-settings-defaults";
 
 const serviceIcons = [Wind, PackageOpen, Weight, ShieldCheck];
 const highlightIcons = [Route, ShieldCheck, Factory];
+
+function safeExternalUrl(value) {
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) ? url.toString() : DEFAULT_HOMEPAGE_CONTENT.recommendation.url;
+  } catch {
+    return DEFAULT_HOMEPAGE_CONTENT.recommendation.url;
+  }
+}
 
 export default function Home({ settings = null }) {
   const s = { ...DEFAULT_SETTINGS, ...settings };
   const content = mergeHomepageContent(s.homepage_content);
   const brand = `${s.brand_name}${s.brand_suffix}`;
+  const recommendationUrl = safeExternalUrl(content.recommendation.url);
 
   return (
     <main className="transport-site min-h-screen bg-[#eef1f3] text-[#101820]">
@@ -160,6 +172,38 @@ export default function Home({ settings = null }) {
             <div className="mt-7 flex items-start gap-3 text-sm leading-relaxed text-[#101820]/70">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{s.address}<br />IČO {s.ic} · {s.owner_name}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-white/10 bg-[#0f171e] py-14 text-white md:py-20" aria-labelledby="stehuj-recommendation-title">
+        <div className="mx-auto max-w-[1500px] px-5 md:px-10">
+          <div className="grid overflow-hidden border border-white/15 bg-[#101820] lg:grid-cols-[auto_1fr_auto] lg:items-center">
+            <div className="flex h-full min-h-32 items-center justify-center bg-[#f5a623] px-8 text-[#101820] lg:min-h-44">
+              <Building2 className="h-12 w-12" strokeWidth={1.8} aria-hidden="true" />
+            </div>
+            <div className="px-6 py-8 md:px-10">
+              <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f5a623]">
+                {content.recommendation.eyebrow}
+              </div>
+              <h2 id="stehuj-recommendation-title" className="mt-3 text-3xl font-black tracking-[-0.04em] md:text-4xl">
+                {content.recommendation.title}
+              </h2>
+              <p className="mt-3 max-w-3xl leading-relaxed text-white/60">
+                {content.recommendation.text}
+              </p>
+            </div>
+            <div className="px-6 pb-8 md:px-10 lg:pb-0 lg:pl-0">
+              <a
+                href={recommendationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transport-primary-cta whitespace-nowrap"
+              >
+                {content.recommendation.cta}
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </a>
             </div>
           </div>
         </div>

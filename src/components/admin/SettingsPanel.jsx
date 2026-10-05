@@ -177,6 +177,16 @@ export default function SettingsPanel() {
         </div>
       </Section>
 
+      <Section title="Doporučení Stehuj.eu" description="Samostatný blok před patičkou pro stěhování domácností a firem.">
+        <TextField label="Malý nadpis" value={content.recommendation.eyebrow} onChange={(value) => setSectionField("recommendation", "eyebrow", value)} />
+        <TextArea label="Hlavní nadpis" rows={2} value={content.recommendation.title} onChange={(value) => setSectionField("recommendation", "title", value)} />
+        <TextArea label="Doporučující text" rows={3} value={content.recommendation.text} onChange={(value) => setSectionField("recommendation", "text", value)} />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <TextField label="Text tlačítka" value={content.recommendation.cta} onChange={(value) => setSectionField("recommendation", "cta", value)} />
+          <TextField label="Adresa webu" value={content.recommendation.url} mono onChange={(value) => setSectionField("recommendation", "url", value)} />
+        </div>
+      </Section>
+
       <Section title="Patička">
         <TextField label="Text uprostřed patičky" value={content.footer.text} onChange={(value) => setSectionField("footer", "text", value)} />
       </Section>

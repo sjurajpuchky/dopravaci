@@ -10,6 +10,7 @@ test("homepage CMS doplní chybějící sekce výchozím obsahem", () => {
 
   assert.equal(content.services.title, "Vlastní nadpis");
   assert.equal(content.services.eyebrow, DEFAULT_HOMEPAGE_CONTENT.services.eyebrow);
+  assert.equal(content.recommendation.url, "https://www.stehuj.eu");
   assert.equal(content.services.items.length, 4);
   assert.equal(content.contact.directLabel, "Dispečink");
   assert.equal(content.process.steps.length, 3);
