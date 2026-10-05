@@ -71,14 +71,12 @@ async function main() {
 
   const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.SEED_ADMIN_PASSWORD;
-  if (email && password) {
-    if (password.length < 12) throw new Error("SEED_ADMIN_PASSWORD musí mít alespoň 12 znaků");
-    await prisma.user.upsert({
+  await prisma.user.upsert({
       where: { email },
       update: { role: "ADMIN", approvalStatus: "APPROVED", emailVerified: true },
       create: { email, passwordHash: await bcrypt.hash(password, 12), role: "ADMIN", approvalStatus: "APPROVED", emailVerified: true },
-    });
-  }
+  });
+
 }
 
 main().finally(() => prisma.$disconnect());
