@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
-import { articles } from "./seed-data/articles.mjs";
 
 const prisma = new PrismaClient();
 
@@ -68,13 +67,7 @@ async function main() {
     await prisma.galleryItem.createMany({ data: gallery.map(([src, alt, tag], index) => ({ src, alt, tag, sortOrder: index + 1 })) });
   }
 
-  for (const article of articles) {
-    await prisma.article.upsert({
-      where: { slug: article.slug },
-      update: {},
-      create: article,
-    });
-  }
+
 
   const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.SEED_ADMIN_PASSWORD;
